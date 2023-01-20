@@ -23,3 +23,78 @@
 #include <netinet/tcp.h>  // SO_REUSEADDR 
 #include <sys/uio.h>      // writev 
 #include <cstring>        // memset 
+
+using namespace std;
+
+enum RPS { rock, paper, scissors };
+
+// Helper Functions
+int convert(const string input);
+int userChoice();
+void showChoice(const RPS choice);
+void welcomeMessage();
+void displayRules();
+void startGame();
+
+int main(int argc, char* argv[]) {
+   char* serverHost = argv[1];
+   char* serverPort = argv[2];
+
+}
+
+/* Helper Functions */
+
+void welcomeMessage() {
+   cout << "-- Welcome to Roshambo! --" << endl;
+   cout << "To view the rules type 'rules' or press enter to start the game." << endl;
+   string input = "";
+   cin >> input;
+   do {
+      displayRules();
+      cin >> input;
+   } while (input != "");
+   startGame();
+}
+
+void startGame() {
+   
+}
+
+int convert(const string input) {
+   
+   if (input == "Rock" || input == "rock" || input == "R" || input == "r" || input == "0") {
+      return RPS::rock;
+   }
+   else if (input == "Paper" || input == "paper" || input == "P" || input == "p" || input == "1") {
+      return RPS::paper;
+   }
+   else if (input == "Scissors" || input == "scissors" || input == "S" || input == "s" || input == "2") {
+      return RPS::scissors;
+   }
+   cout << "Not a valid input!\n" << "Please enter:\n" << 
+   "(Rock = Rock, rock, R, or r\n" << "Paper = Paper, paper, P, or p\n"
+   << "Scissors = Scissors, scissors, S, or s" << endl;
+   return -1; // If no valid inputs, return -1 = false
+}
+
+int userChoice() {
+    string input;
+    int choice = -1;
+
+    // Loop checking for valid input
+    while (choice == -1) {
+        cout << "Type in your option (rock, paper, scissors): ";
+        cin >> input;
+        choice = convert(input); // Converts string to int
+    }
+    return choice;
+}
+
+void showChoice(const RPS choice) {
+    switch (choice) {
+        case rock: cout << "Rock"; break;
+        case paper: cout << "Paper"; break;
+        case scissors: cout << "Scissors"; break;
+    }
+}
+
