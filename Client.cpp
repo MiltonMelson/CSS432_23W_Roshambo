@@ -51,6 +51,7 @@ void welcomeMessage() {
    cin >> input;
    do {
       displayRules();
+      cout << "\nPress enter to start the game..." << endl;
       cin >> input;
    } while (input != "");
    startGame();
