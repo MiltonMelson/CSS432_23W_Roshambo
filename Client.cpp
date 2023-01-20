@@ -56,8 +56,15 @@ void welcomeMessage() {
    startGame();
 }
 
+void displayRules() {
+   cout << "Rules:\n" <<
+   "This is a two player game. Each player will input (Rock, Paper, or Scissors).\n\n" <<
+   "Acceptable format: \n(Rock: Rock, rock, R, or r)\n(Paper: Paper, paper, P, or p)\n(Scissors: Scissors, scissors, S, or s)\n\n"
+   << "Game Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)" << endl;
+}
+
 void startGame() {
-   
+
 }
 
 int convert(const string input) {
