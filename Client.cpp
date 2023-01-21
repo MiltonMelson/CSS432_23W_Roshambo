@@ -11,25 +11,29 @@
 */
 
 #include <iostream>
-#include <cstdlib>        // atoi
-#include <sys/time.h>     // gettimeofday
-#include <sys/types.h>    // socket, bind 
-#include <sys/socket.h>   // socket, bind, listen, inet_ntoa 
-#include <netinet/in.h>   // htonl, htons, inet_ntoa 
-#include <arpa/inet.h>    // inet_ntoa 
-#include <netdb.h>        // gethostbyname 
-#include <unistd.h>       // read, write, close 
-#include <strings.h>      // bzero 
-#include <netinet/tcp.h>  // SO_REUSEADDR 
-#include <sys/uio.h>      // writev 
-#include <cstring>        // memset 
+#include <string>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/uio.h>
+#include <sys/time.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <fstream>
+
 
 using namespace std;
 
 enum RPS { rock, paper, scissors };
 
 // Helper Functions
-int convert(const string input);
+int convert(string input);
 int userChoice();
 void showChoice(const RPS choice);
 void welcomeMessage();
@@ -37,38 +41,71 @@ void displayRules();
 void startGame();
 
 int main(int argc, char* argv[]) {
-   char* serverHost = argv[1];
-   char* serverPort = argv[2];
+   if (argc != 3) {
+      cout << "Please enter {servers hostname, port#}" << endl;
+      return 0;
+   }
+   char* serverIP = argv[1];     // servers ip address
+   int port = atoi(argv[2]);     // servers port number
 
+   // setup address information and connection tools
+   struct hostent* host = gethostbyname(serverIP);
+   struct sockaddr_in serverInfo;
+   memset(&serverInfo, 0, sizeof(serverInfo));
+   serverInfo.sin_family = AF_INET; 
+   serverInfo.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
+   serverInfo.sin_port = htons(port);
+
+   // create socket
+   int sd = socket(AF_INET, SOCK_STREAM, 0);
+   cout << "Socket Created..." << endl;
+
+   // Try to connect to socket descriptor 
+   if ((connect(sd, (sockaddr*)&serverInfo, sizeof(serverInfo))) < 0) {
+      cout << "Error trying to connect..." << endl;
+      return -1; 
+   }
+   cout << "Connected to server..." << endl;
+
+
+   // game logic
+   startGame();
+   
+
+   // close sd
+   close(sd);
+   return 0;
 }
 
-/* Helper Functions */
+/* ----- Helper Functions ----- */
+
+void startGame() {
+   welcomeMessage();
+   RPS ans = (RPS)userChoice();
+   showChoice(ans);
+}
 
 void welcomeMessage() {
-   cout << "-- Welcome to Roshambo! --" << endl;
+   cout << "\n\t----- Welcome to Roshambo -----\n\n" << endl;
    cout << "To view the rules type 'rules' or press enter to start the game." << endl;
    string input = "";
-   cin >> input;
-   do {
+   char* msg;
+   getline(cin, input);
+   strcpy(msg, input.c_str());
+   if (strcmp(msg, "rules") == 0) {
       displayRules();
-      cout << "\nPress enter to start the game..." << endl;
-      cin >> input;
-   } while (input != "");
-   startGame();
+   }
 }
 
 void displayRules() {
    cout << "Rules:\n" <<
-   "This is a two player game. Each player will input (Rock, Paper, or Scissors).\n\n" <<
-   "Acceptable format: \n(Rock: Rock, rock, R, or r)\n(Paper: Paper, paper, P, or p)\n(Scissors: Scissors, scissors, S, or s)\n\n"
-   << "Game Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)" << endl;
+   "\tThis is a two player game. Each player will input (Rock, Paper, or Scissors).\n\n" <<
+   "\tAcceptable format: \n\t\t(Rock: Rock, rock, R, or r)\n\t\t(Paper: Paper, paper, P, or p)\n\t\t(Scissors: Scissors, scissors, S, or s)\n\n"
+   << "\tGame Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n" << endl;
+   cout << "Lets begin...\n" << endl;
 }
 
-void startGame() {
-
-}
-
-int convert(const string input) {
+int convert(string input) {
    
    if (input == "Rock" || input == "rock" || input == "R" || input == "r" || input == "0") {
       return RPS::rock;
@@ -79,20 +116,19 @@ int convert(const string input) {
    else if (input == "Scissors" || input == "scissors" || input == "S" || input == "s" || input == "2") {
       return RPS::scissors;
    }
-   cout << "Not a valid input!\n" << "Please enter:\n" << 
-   "(Rock = Rock, rock, R, or r\n" << "Paper = Paper, paper, P, or p\n"
-   << "Scissors = Scissors, scissors, S, or s" << endl;
+   cout << "Sorry that is not a valid input!\n\n" << "Please enter: " << 
+   "\n\tRock = Rock, rock, R, or r)" << "\n\tPaper = Paper, paper, P, or p"
+   << "\n\tScissors = Scissors, scissors, S, or s" << endl;
    return -1; // If no valid inputs, return -1 = false
 }
 
 int userChoice() {
     string input;
     int choice = -1;
-
     // Loop checking for valid input
     while (choice == -1) {
         cout << "Type in your option (rock, paper, scissors): ";
-        cin >> input;
+        getline(cin, input);
         choice = convert(input); // Converts string to int
     }
     return choice;
@@ -100,9 +136,15 @@ int userChoice() {
 
 void showChoice(const RPS choice) {
     switch (choice) {
-        case rock: cout << "Rock"; break;
-        case paper: cout << "Paper"; break;
-        case scissors: cout << "Scissors"; break;
+        case rock: 
+         cout << "Rock\n"; 
+         break;
+        case paper: 
+         cout << "Paper\n"; 
+         break;
+        case scissors: 
+         cout << "Scissors\n"; 
+         break;
     }
 }
 
