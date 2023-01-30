@@ -11,21 +11,16 @@
 */
 
 #include <iostream>
-#include <string>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <netdb.h>
-#include <sys/uio.h>
-#include <sys/time.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <fstream>
+#include <sys/types.h>    // socket, bind 
+#include <sys/socket.h>   // socket, bind, listen, inet_ntoa 
+#include <netinet/in.h>   // htonl, htons, inet_ntoa 
+#include <arpa/inet.h>    // inet_ntoa 
+#include <netdb.h>        // gethostbyname 
+#include <unistd.h>       // read, write, close 
+#include <strings.h>      // bzero 
+#include <netinet/tcp.h>  // SO_REUSEADDR 
+#include <sys/uio.h>      // writev 
+#include <cstring>        // memset 
 
 
 using namespace std;
@@ -46,27 +41,42 @@ int main(int argc, char* argv[]) {
       return 0;
    }
    char* serverIP = argv[1];     // servers ip address
-   int port = atoi(argv[2]);     // servers port number
+   char* port = argv[2];     // servers port number
 
-   // setup address information and connection tools
-   struct hostent* host = gethostbyname(serverIP);
-   struct sockaddr_in serverInfo;
-   memset(&serverInfo, 0, sizeof(serverInfo));
-   serverInfo.sin_family = AF_INET; 
-   serverInfo.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
-   serverInfo.sin_port = htons(port);
+   // Setup the addressinfo containers
+   struct addrinfo hints, *res;
+   memset(&hints, 0, sizeof(hints));
+   hints.ai_family = AF_UNSPEC;
+   hints.ai_socktype = SOCK_STREAM;
 
-   // create socket
-   int sd = socket(AF_INET, SOCK_STREAM, 0);
-   cout << "Socket Created..." << endl;
-
-   // Try to connect to socket descriptor 
-   if ((connect(sd, (sockaddr*)&serverInfo, sizeof(serverInfo))) < 0) {
-      cout << "Error trying to connect..." << endl;
-      return -1; 
+   // get address info and store into *res
+   int status;
+   if ((status = getaddrinfo(serverIP, port, &hints, &res)) < 0) {
+      fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+      return -1;
    }
-   cout << "Connected to server..." << endl;
 
+   // create a socket
+   int sd;
+   if ((sd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+      perror("Error: Could not create socket");
+      return -1;
+   }
+   /**
+    * loss the pesky "Address already in use" error message
+    * Set the SO_REUSEADDR option. (Note this option is useful to prompt OS to 
+    * release the server port as soon as your server process is terminated.)
+   */  
+   const int yes = 1;
+   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
+
+   // connect to server through socket descriptor
+   if (connect(sd, res->ai_addr, res->ai_addrlen) < 0) {
+      perror("Error");
+      close(sd);
+      return -1;
+   }
+   printf("Connecting to Server...\n\n");
 
    // game logic
    startGame();
@@ -74,6 +84,8 @@ int main(int argc, char* argv[]) {
 
    // close sd
    close(sd);
+   // free address info
+   freeaddrinfo(res);
    return 0;
 }
 
@@ -87,22 +99,19 @@ void startGame() {
 
 void welcomeMessage() {
    cout << "\n\t----- Welcome to Roshambo -----\n\n" << endl;
-   cout << "To view the rules type 'rules' or press enter to start the game." << endl;
-   string input = "";
-   char* msg;
+   printf("To view the rules type 'rules' or press 'Enter' to start the game.\n");
+
+   string input;
    getline(cin, input);
-   strcpy(msg, input.c_str());
-   if (strcmp(msg, "rules") == 0) {
+   if (input.compare("rules") == 0) {
       displayRules();
    }
 }
 
 void displayRules() {
-   cout << "Rules:\n" <<
-   "\tThis is a two player game. Each player will input (Rock, Paper, or Scissors).\n\n" <<
-   "\tAcceptable format: \n\t\t(Rock: Rock, rock, R, or r)\n\t\t(Paper: Paper, paper, P, or p)\n\t\t(Scissors: Scissors, scissors, S, or s)\n\n"
-   << "\tGame Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n" << endl;
-   cout << "Lets begin...\n" << endl;
+   cout << "\n~~ This is a two player game. Each player will input (Rock, Paper, or Scissors) ~~\n\n" <<
+   "Acceptable format: \n\t(Rock: Rock, rock, R, or r)\n\t(Paper: Paper, paper, P, or p)\n\t(Scissors: Scissors, scissors, S, or s)\n\n"
+   << "Game Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n" << endl;
 }
 
 int convert(string input) {
@@ -135,6 +144,7 @@ int userChoice() {
 }
 
 void showChoice(const RPS choice) {
+   printf("Your choice was: ");
     switch (choice) {
         case rock: 
          cout << "Rock\n"; 
