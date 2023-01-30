@@ -95,11 +95,12 @@ void startGame() {
    welcomeMessage();
    RPS ans = (RPS)userChoice();
    showChoice(ans);
+
 }
 
 void welcomeMessage() {
    cout << "\n\t----- Welcome to Roshambo -----\n\n" << endl;
-   printf("To view the rules type 'rules' or press 'Enter' to start the game.\n");
+   cout << "To view the rules type 'rules' or press 'Enter' to start the game." << endl;
 
    string input;
    getline(cin, input);
@@ -125,9 +126,9 @@ int convert(string input) {
    else if (input == "Scissors" || input == "scissors" || input == "S" || input == "s" || input == "2") {
       return RPS::scissors;
    }
-   cout << "Sorry that is not a valid input!\n\n" << "Please enter: " << 
-   "\n\tRock = Rock, rock, R, or r)" << "\n\tPaper = Paper, paper, P, or p"
-   << "\n\tScissors = Scissors, scissors, S, or s" << endl;
+   cout << "\n\n!!! Sorry that is not a valid input !!!\n\n" << "Please enter: " << 
+   "\n\tRock = (Rock, rock, R, or r)" << "\n\tPaper = (Paper, paper, P, or p)"
+   << "\n\tScissors = (Scissors, scissors, S, or s)\n" << endl;
    return -1; // If no valid inputs, return -1 = false
 }
 
@@ -144,17 +145,18 @@ int userChoice() {
 }
 
 void showChoice(const RPS choice) {
-   printf("Your choice was: ");
+   cout << "Your choice was: ";
     switch (choice) {
         case rock: 
-         cout << "Rock\n"; 
+         cout << "Rock"; 
          break;
         case paper: 
-         cout << "Paper\n"; 
+         cout << "Paper"; 
          break;
         case scissors: 
-         cout << "Scissors\n"; 
+         cout << "Scissors"; 
          break;
     }
+    cout << endl;
 }
 

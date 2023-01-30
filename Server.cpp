@@ -25,10 +25,11 @@
 
 using namespace std;
 const char* PORT = (char*)"8080";
-const int numberOfPlayers = 10;
+int players = 2;
 
 struct thread_data {
    int sd;
+   int userChoice;
 };
 
 // helper functions
@@ -63,7 +64,6 @@ int main(int argc, char *argv[]) {
    */  
    const int yes = 1;
    setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
-   cout << "Server socket created..." << endl;
 
    // bind the socket
    if (bind(sd, res->ai_addr, res->ai_addrlen) < 0) {
@@ -71,42 +71,35 @@ int main(int argc, char *argv[]) {
       close(sd);
       return 0;
    }
-   cout << "Binding complete..." << endl;
    
-
+   cout << "Waiting for players..." << endl;
    // listen for N request
-   if (listen(sd, numberOfPlayers) < 0) {
+   if (listen(sd, players) < 0) {
       perror("Can't listen!");
       close(sd);
       return 0;
    } 
-   cout << "Socket is listening..." << endl;
 
-   // now accept an incoming connection
+   // New player has joined the game create a thread
     struct sockaddr_storage clientAddr;
     socklen_t clientAddrSize = sizeof(clientAddr);
-    pthread_t tid[numberOfPlayers];
-    int i = 0;
-    while (i < numberOfPlayers) {
+    pthread_t tid[players];
+    while (players > 0) {
       int newSd = accept(sd, (struct sockaddr *)&clientAddr, &clientAddrSize);
       if (newSd < 0) {
          cerr << "Unable to accept client...";
          return 0;
       }
-
-      // // Project title to show when external webpage is connected to server
-      // string msg = "\n\n~~~ CSS 432: HW2 (Retriever/Server) using HTTP ~~~\n\n";
-      // send(newSd, msg.c_str(), msg.length(), 0);
-
-      cout << "Client " << i << " accepted..." << endl;
+      // players connected to game
+      cout << "Player " << players << " has joined the game!" << endl;
       // create a new posix thread for each accepted socket descriptor
       struct thread_data *data = new thread_data;
       data->sd = newSd;
-      int iret1 = pthread_create(&tid[i], NULL, startGame, (void*)data);
-      i++;
+      int iret1 = pthread_create(&tid[players--], NULL, startGame, (void*)data);
     }
-    while (i-- >= 0) {
-      pthread_join(tid[i], NULL);
+    players = 1;
+    while (players <= 2) {
+      pthread_join(tid[players++], NULL);
     }
 
 
@@ -117,5 +110,7 @@ int main(int argc, char *argv[]) {
 }
 
 void* startGame(void* data) {
+   thread_data *ptr = (struct thread_data*)data;
+
    return data;
 }
