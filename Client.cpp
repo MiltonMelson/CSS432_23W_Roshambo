@@ -27,10 +27,12 @@ using namespace std;
 
 enum RPS { rock, paper, scissors };
 
+int sd;        // socket descriptor
+
 // Helper Functions
 int convert(string input);
 int userChoice();
-void showChoice(const RPS choice);
+char* showChoice(const RPS choice);
 void welcomeMessage();
 void displayRules();
 void startGame();
@@ -57,7 +59,6 @@ int main(int argc, char* argv[]) {
    }
 
    // create a socket
-   int sd;
    if ((sd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
       perror("Error: Could not create socket");
       return -1;
@@ -82,8 +83,6 @@ int main(int argc, char* argv[]) {
    startGame();
    
 
-   // close sd
-   close(sd);
    // free address info
    freeaddrinfo(res);
    return 0;
@@ -94,12 +93,16 @@ int main(int argc, char* argv[]) {
 void startGame() {
    welcomeMessage();
    RPS ans = (RPS)userChoice();
-   showChoice(ans);
-
+   char* msg = (char*)showChoice(ans);
+   send(sd, msg, sizeof(msg), 0);
+   memset(&msg, 0, sizeof(msg));
+   recv(sd, msg, sizeof(4000), 0);
+   cout << msg << endl;
+   close(sd);
 }
 
 void welcomeMessage() {
-   cout << "\n\t----- Welcome to Roshambo -----\n\n" << endl;
+   cout << "\n\n---- Welcome to Roshambo -----\n\n" << endl;
    cout << "To view the rules type 'rules' or press 'Enter' to start the game." << endl;
 
    string input;
@@ -107,6 +110,8 @@ void welcomeMessage() {
    if (input.compare("rules") == 0) {
       displayRules();
    }
+
+   cout << "\n\n---- LET THE MATCH BEGIN -----\n\n" << endl;
 }
 
 void displayRules() {
@@ -144,19 +149,24 @@ int userChoice() {
     return choice;
 }
 
-void showChoice(const RPS choice) {
+char* showChoice(const RPS choice) {
    cout << "Your choice was: ";
+   char* res;
     switch (choice) {
         case rock: 
          cout << "Rock"; 
+         res = (char*)"Rock";
          break;
         case paper: 
          cout << "Paper"; 
+         res = (char*)"Paper";
          break;
         case scissors: 
          cout << "Scissors"; 
+         res = (char*)"Scissors";
          break;
     }
     cout << endl;
+    return res;
 }
 

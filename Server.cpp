@@ -26,10 +26,14 @@
 using namespace std;
 const char* PORT = (char*)"8080";
 int players = 2;
+int thread = 0;
+int* scoreboard[2];
+string answers[2];
 
 struct thread_data {
    int sd;
-   int userChoice;
+   int tid;
+   char* userChoice;
 };
 
 // helper functions
@@ -84,22 +88,22 @@ int main(int argc, char *argv[]) {
     struct sockaddr_storage clientAddr;
     socklen_t clientAddrSize = sizeof(clientAddr);
     pthread_t tid[players];
-    while (players > 0) {
+    while (thread < players) {
       int newSd = accept(sd, (struct sockaddr *)&clientAddr, &clientAddrSize);
       if (newSd < 0) {
          cerr << "Unable to accept client...";
          return 0;
       }
       // players connected to game
-      cout << "Player " << players << " has joined the game!" << endl;
+      cout << "Player " << thread+1 << " has joined the game!" << endl;
       // create a new posix thread for each accepted socket descriptor
       struct thread_data *data = new thread_data;
       data->sd = newSd;
-      int iret1 = pthread_create(&tid[players--], NULL, startGame, (void*)data);
+      data->tid = thread;
+      int iret1 = pthread_create(&tid[thread++], NULL, startGame, (void*)data);
     }
-    players = 1;
-    while (players <= 2) {
-      pthread_join(tid[players++], NULL);
+    for (int i = 0; i < thread; i++) {
+      pthread_join(tid[i], NULL);
     }
 
 
@@ -111,6 +115,59 @@ int main(int argc, char *argv[]) {
 
 void* startGame(void* data) {
    thread_data *ptr = (struct thread_data*)data;
+   ptr->userChoice = new char[4000];
+   answers[0] = "0";
+   answers[1] = "0";
+   char* msg;
 
+   while (thread < players) {
+      // wait for both players
+   }
+   cout << "Made it pass waiting for players" << endl;
+
+   // reciever users choice
+   recv(ptr->sd, ptr->userChoice, sizeof(ptr->userChoice), 0);   
+   cout << "recievers choice: " << ptr->userChoice << endl;
+   while (answers[0] == "0" || answers[1] == "0") {
+      // wait for players to pick 
+      answers[ptr->tid] = ptr->userChoice;
+   }
+
+   cout << "passed waiting for answers" << endl;
+
+   // player picks rock
+   if (answers[0].compare("Rock") == 0) {
+
+      // opponent picks paper
+      if (answers[1].compare("Paper")) {
+         msg = (char*)"You Lose!!";
+         if (ptr->tid == 0) {
+            scoreboard[1]++;
+         }
+         else {
+            scoreboard[0]++;
+         }
+         send(ptr->sd, msg, sizeof(msg), 0);
+      }
+      // opponent picks scissors
+      else if (answers[1].compare("Scissors") == 0) {
+         msg = (char*)"You Win!!";
+         if (ptr->tid == 0) {
+            scoreboard[0]++;
+         }
+         else {
+            scoreboard[1]++;
+         }
+         send(ptr->sd, msg, sizeof(msg), 0);
+      }
+      // opponent picks rock
+      else {
+         msg = (char*)"Game Draw";
+         send(ptr->sd, msg, sizeof(msg), 0);
+      }
+   }
+
+   // close client socket descriptor
+   close(ptr->sd);
    return data;
 }
