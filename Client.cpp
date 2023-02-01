@@ -36,15 +36,27 @@ char* showChoice(const RPS choice);
 void welcomeMessage();
 void displayRules();
 void startGame();
+int connectSocket(char* serverIP, char* port);
+
 
 int main(int argc, char* argv[]) {
    if (argc != 3) {
       cout << "Please enter {servers hostname, port#}" << endl;
       return 0;
    }
-   char* serverIP = argv[1];     // servers ip address
-   char* port = argv[2];     // servers port number
+   // create socket and start game
+   connectSocket(argv[1], argv[2]);
+   return 0;
+}
 
+/* ----- Helper Functions ----- */
+
+/**
+ * @brief Creates a TCP connection between client and server
+ * @param serverIP The provided IP address of the server
+ * @param port The default port address being used
+*/
+int connectSocket(char* serverIP, char* port) {
    // Setup the addressinfo containers
    struct addrinfo hints, *res;
    memset(&hints, 0, sizeof(hints));
@@ -79,17 +91,17 @@ int main(int argc, char* argv[]) {
    }
    printf("Connecting to Server...\n\n");
 
-   // game logic
+   // Starts the game
    startGame();
    
-
    // free address info
    freeaddrinfo(res);
    return 0;
 }
 
-/* ----- Helper Functions ----- */
-
+/**
+ * @brief Starts the game and communicates with game server
+*/
 void startGame() {
    welcomeMessage();
 
@@ -105,27 +117,34 @@ void startGame() {
    close(sd);
 }
 
+/**
+ * @brief Welcome message and ask player if they want to read the rules.
+*/
 void welcomeMessage() {
    cout << "\n\n---- Welcome to Roshambo -----\n\n" << endl;
    cout << "To view the rules type 'rules' or press 'Enter' to start the game." << endl;
-
    string input;
    getline(cin, input);
    if (input.compare("rules") == 0) {
       displayRules();
    }
-
    cout << "\n\n---- LET THE MATCH BEGIN -----\n\n" << endl;
 }
 
+/**
+ * @brief Simple message explaining the rules of the game to the players
+ */
 void displayRules() {
    cout << "\n~~ This is a two player game. Each player will input (Rock, Paper, or Scissors) ~~\n\n" <<
    "Acceptable format: \n\t(Rock: Rock, rock, R, or r)\n\t(Paper: Paper, paper, P, or p)\n\t(Scissors: Scissors, scissors, S, or s)\n\n"
    << "Game Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n" << endl;
 }
 
+/** 
+ * @brief Converts users choice to int 
+ * @param input Can be a variation of rock, paper, scissors, or enum equivalent 
+*/
 int convert(string input) {
-   
    if (input == "Rock" || input == "rock" || input == "R" || input == "r" || input == "0") {
       return RPS::rock;
    }
@@ -141,6 +160,9 @@ int convert(string input) {
    return -1; // If no valid inputs, return -1 = false
 }
 
+/** 
+ * @brief Recieves input from the player and will keep checking until correct response is entered
+*/
 int userChoice() {
     string input;
     int choice = -1;
@@ -153,6 +175,11 @@ int userChoice() {
     return choice;
 }
 
+
+/**
+ * @brief Shows the users choice and also returns a string to send to server for comparisons 
+ * @param choice Accepts a RPS const value
+*/
 char* showChoice(const RPS choice) {
    cout << "Your choice was: ";
    char* res;

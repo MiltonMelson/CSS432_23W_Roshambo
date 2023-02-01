@@ -155,12 +155,12 @@ void* startGame(void* data) {
 
          // player 1's thread
          if (ptr->tid == 0) {
-            scoreboard[1]++;
+            scoreboard[0]++;
             msg = "You Win !!!";
          }
          // player 2's thread
          else {
-            msg = "You Win !!!";
+            msg = "You Lose !!!";
          }
       }
       // opponent picks rock
