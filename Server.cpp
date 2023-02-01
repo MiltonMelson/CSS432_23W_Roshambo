@@ -24,6 +24,7 @@
 #include <cstring>        // memset 
 
 using namespace std;
+
 const char* PORT = (char*)"8080";
 int players = 2;
 int thread = 0;
@@ -94,8 +95,6 @@ int main(int argc, char *argv[]) {
          cerr << "Unable to accept client...";
          return 0;
       }
-      // players connected to game
-      cout << "Player " << thread+1 << " has joined the game!" << endl;
       // create a new posix thread for each accepted socket descriptor
       struct thread_data *data = new thread_data;
       data->sd = newSd;
@@ -115,56 +114,61 @@ int main(int argc, char *argv[]) {
 
 void* startGame(void* data) {
    thread_data *ptr = (struct thread_data*)data;
-   ptr->userChoice = new char[4000];
+   ptr->userChoice = new char[10];
    answers[0] = "0";
    answers[1] = "0";
-   char* msg;
+   string msg;
 
+   // players connected to game
+   cout << "Player " << ptr->tid+1 << " has joined the game!" << endl;
    while (thread < players) {
-      // wait for both players
+      // wait for both players 
    }
-   cout << "Made it pass waiting for players" << endl;
 
-   // reciever users choice
+   // wait for players to input answer
    recv(ptr->sd, ptr->userChoice, sizeof(ptr->userChoice), 0);   
-   cout << "recievers choice: " << ptr->userChoice << endl;
    while (answers[0] == "0" || answers[1] == "0") {
       // wait for players to pick 
       answers[ptr->tid] = ptr->userChoice;
    }
 
-   cout << "passed waiting for answers" << endl;
+   // Decide winner and send message to clients
 
-   // player picks rock
+   // player 1 picks rock
    if (answers[0].compare("Rock") == 0) {
 
-      // opponent picks paper
-      if (answers[1].compare("Paper")) {
-         msg = (char*)"You Lose!!";
+      // player 2 picks paper
+      if (answers[1].compare("Paper") == 0) {
+
+         // player 1's thread
          if (ptr->tid == 0) {
-            scoreboard[1]++;
+            msg = "You Lose !!!";
          }
+         // player 2's thread
          else {
-            scoreboard[0]++;
+            scoreboard[1]++;
+            msg = "You Win !!!";
          }
-         send(ptr->sd, msg, sizeof(msg), 0);
       }
-      // opponent picks scissors
+      // player 2 picks scissors
       else if (answers[1].compare("Scissors") == 0) {
-         msg = (char*)"You Win!!";
+
+         // player 1's thread
          if (ptr->tid == 0) {
-            scoreboard[0]++;
-         }
-         else {
             scoreboard[1]++;
+            msg = "You Win !!!";
          }
-         send(ptr->sd, msg, sizeof(msg), 0);
+         // player 2's thread
+         else {
+            msg = "You Win !!!";
+         }
       }
       // opponent picks rock
       else {
-         msg = (char*)"Game Draw";
-         send(ptr->sd, msg, sizeof(msg), 0);
+         // Draw
+         msg = "Game Draw !!!";
       }
+      send(ptr->sd, msg.c_str(), sizeof(msg), 0);
    }
 
    // close client socket descriptor

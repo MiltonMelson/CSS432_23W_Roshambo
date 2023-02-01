@@ -92,12 +92,16 @@ int main(int argc, char* argv[]) {
 
 void startGame() {
    welcomeMessage();
-   RPS ans = (RPS)userChoice();
-   char* msg = (char*)showChoice(ans);
-   send(sd, msg, sizeof(msg), 0);
-   memset(&msg, 0, sizeof(msg));
-   recv(sd, msg, sizeof(4000), 0);
-   cout << msg << endl;
+
+   // send players choice to server
+   RPS choice = (RPS)userChoice();
+   char* ans = (char*)showChoice(choice);
+   send(sd, ans, sizeof(ans), 0);
+
+   // read results from match
+   char buffer[256];
+   recv(sd, buffer, sizeof(buffer), 0);
+   cout << buffer << endl;
    close(sd);
 }
 
