@@ -121,23 +121,35 @@ void startGame() {
  * @brief Welcome message and ask player if they want to read the rules.
 */
 void welcomeMessage() {
-   cout << "\n\n---- Welcome to Roshambo -----\n\n" << endl;
+   cout << "\n\n---------------- Welcome to Roshambo ----------------\n\n" << endl;
    cout << "To view the rules type 'rules' or press 'Enter' to start the game." << endl;
    string input;
    getline(cin, input);
+
+   // convert string to lowercase for different case inputs
+   for (int i = 0; i < input.length(); i++) {
+      input[i] = tolower(input[i]);
+   }
    if (input.compare("rules") == 0) {
       displayRules();
    }
-   cout << "\n\n---- LET THE MATCH BEGIN -----\n\n" << endl;
+   cout << "\n\n---------------- LET THE MATCH BEGIN -----------------\n\n" << endl;
 }
 
 /**
  * @brief Simple message explaining the rules of the game to the players
  */
 void displayRules() {
-   cout << "\n~~ This is a two player game. Each player will input (Rock, Paper, or Scissors) ~~\n\n" <<
-   "Acceptable format: \n\t(Rock: Rock, rock, R, or r)\n\t(Paper: Paper, paper, P, or p)\n\t(Scissors: Scissors, scissors, S, or s)\n\n"
-   << "Game Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n" << endl;
+   cout << "\n************************************************************" << endl;
+   cout << "\nThis is a two player game. Each player will pick either rock, paper, or scissors.\n" << endl;
+   sleep(4);
+   cout << "Acceptable format:" << 
+   "\n\t(Rock: Rock, rock, R, or r)" <<
+   "\n\t(Paper: Paper, paper, P, or p)" <<
+   "\n\t(Scissors: Scissors, scissors, S, or s)\n\n" << 
+   "Game Logic: (Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n" << endl;
+   cout << "************************************************************" << endl;
+   sleep(8);
 }
 
 /** 
