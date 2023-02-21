@@ -12,6 +12,7 @@ class Client {
       ~Client();
       void makeChoice();
       int convertAnswer(string input);
+      void playGame();
 
    private:
       int sd;

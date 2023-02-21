@@ -4,7 +4,7 @@
 #include "Player.h"
 #include "Socket.h"
 
-static int* scoreboard[2];         // scoreboard to keep track of each players score
+static int scoreboard[2];         // scoreboard to keep track of each players score
 static string answers[2];          // String array to store both players answers prior to determining each winner 
 static bool playersReady;
 
@@ -17,7 +17,7 @@ class Server {
       string displayRules();
       void waitForPlayers(Player player);
       void waitForAnswers(Player player);
-      void determineWinner(Player player);
+      string determineWinner(Player player);
       void sendMessage(Player player, string msg);
 
    private:

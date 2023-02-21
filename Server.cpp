@@ -5,6 +5,8 @@ Server::Server() {
    maxPlayers = 2;
    answers[0] = "0";
    answers[1] = "0";
+   scoreboard[0] = 0;
+   scoreboard[1] = 0;
    playersReady = false;
 }
 
@@ -16,8 +18,19 @@ void Server::startGame(void* info) {
    Player player = *(Player*)info;  // store info into player
    sendMessage(player, welcomeMessage() + displayRules());
    waitForPlayers(player);
-   waitForAnswers(player);
-   determineWinner(player);
+
+   // best 2 out of 3 (almost)
+   // runs 3 round no matter what atm
+   for (int i = 0; i < 3; i++) {
+      stringstream msg;
+      waitForAnswers(player);
+      msg << determineWinner(player);
+      msg << "\nYour score: " << scoreboard[player.playerNumber-1] 
+      << "\nEnemy score: " << scoreboard[(player.playerNumber)%2] << "\n\n";
+      sendMessage(player, msg.str());
+      answers[0] = "0";
+      answers[1] = "0";
+   }
    close(player.socketDescriptor);
 }
 
@@ -59,7 +72,7 @@ void Server::waitForAnswers(Player player) {
    }
 }
 
-void Server::determineWinner(Player player) {
+string Server::determineWinner(Player player) {
    string msg;
    
    // player 1 picks rock
@@ -70,12 +83,12 @@ void Server::determineWinner(Player player) {
 
          // player 1's thread
          if (player.playerNumber == 1) {
-            msg = "You Lose !!!";
+            msg = "Paper covers Rock, You Lose!";
          }
          // player 2's thread
          else {
             scoreboard[1]++;
-            msg = "You Win !!!";
+            msg = "Paper covers Rock, You Win!";
          }
       }
       // player 2 picks scissors
@@ -84,17 +97,17 @@ void Server::determineWinner(Player player) {
          // player 1's thread
          if (player.playerNumber == 1) {
             scoreboard[0]++;
-            msg = "You Win !!!";
+            msg = "Rock smashes Scissors, You Win!";
          }
          // player 2's thread
          else {
-            msg = "You Lose !!!";
+            msg = "Rock smashes Scissors, You Lose!";
          }
       }
       // opponent picks rock
       else {
          // Draw
-         msg = "Game Draw !!!";
+         msg = "Draw!";
       }
    }
    // player 1 picks paper
@@ -105,12 +118,12 @@ void Server::determineWinner(Player player) {
 
          // player 1's thread
          if (player.playerNumber == 1) {
-            msg = "You Lose !!!";
+            msg = "Scissors cuts paper, You Lose!";
          }
          // player 2's thread
          else {
             scoreboard[1]++;
-            msg = "You Win !!!";
+            msg = "Scissors cuts paper, You Win!";
          }
       }
       // player 2 picks Rock
@@ -119,17 +132,17 @@ void Server::determineWinner(Player player) {
          // player 1's thread
          if (player.playerNumber == 1) {
             scoreboard[0]++;
-            msg = "You Win !!!";
+            msg = "Paper covers Rock, You Win!";
          }
          // player 2's thread
          else {
-            msg = "You Lose !!!";
+            msg = "Paper covers Rock, You Lose!";
          }
       }
       // opponent picks Paper
       else {
          // Draw
-         msg = "Game Draw !!!";
+         msg = "Draw!";
       }
    }
    // player 1 picks Scissors
@@ -140,12 +153,12 @@ void Server::determineWinner(Player player) {
 
          // player 1's thread
          if (player.playerNumber == 1) {
-            msg = "You Lose !!!";
+            msg = "Rock smashes Scissors, You Lose!";
          }
          // player 2's thread
          else {
             scoreboard[1]++;
-            msg = "You Win !!!";
+            msg = "Rock smashes Scissors, You Win!";
          }
       }
       // player 2 picks Paper
@@ -154,22 +167,20 @@ void Server::determineWinner(Player player) {
          // player 1's thread
          if (player.playerNumber == 1) {
             scoreboard[0]++;
-            msg = "You Win !!!";
+            msg = "Scissors cuts Paper, You Win!";
          }
          // player 2's thread
          else {
-            msg = "You Lose !!!";
+            msg = "Scissors cuts Paper, You Lose!";
          }
       }
       // opponent picks Paper
       else {
          // Draw
-         msg = "Game Draw !!!";
+         msg = "Draw!";
       }
    }
-
-   cout << "Player " << player.playerNumber << " picked: " << msg << endl;
-   sendMessage(player, msg);
+   return msg;
 }
 
 void Server::sendMessage(Player player, string msg) {

@@ -1,26 +1,38 @@
 #include "Client.h"
 
 Client::Client() {}
+
 Client::Client(int socket) {
    sd = socket;
-
-   memset(&buffer, 0, sizeof(buffer));    // clear buffer
-   recv(sd, buffer, sizeof(buffer), 0);   // recieve Welcome message and rules
-   cout << buffer;                        // output message
-
-
-   makeChoice();
-   memset(&buffer, 0, sizeof(buffer));
-   strcpy(buffer, choice.c_str());
-   send(sd, buffer, sizeof(buffer), 0);
-
-   memset(&buffer, 0, sizeof(buffer));
-   recv(sd, buffer, sizeof(buffer), 0);   
-   cout << buffer;       
+   playGame();
 }
 
 Client::~Client() {
    cout << "\n\nGoodbye..." << endl;
+}
+
+void Client::playGame() {
+   memset(&buffer, 0, sizeof(buffer));    // clear buffer
+   recv(sd, buffer, sizeof(buffer), 0);   // recieve Welcome message and rules
+   cout << buffer;                        // output message
+
+   // best 2 out of 3 (almost)
+   // runs 3 round no matter what atm
+   for (int i = 0; i < 3; i++) {
+      // message for each round
+      cout << "Round: " << i+1 << endl;
+
+      // player makes choice and send to server
+      makeChoice();
+      memset(&buffer, 0, sizeof(buffer));
+      strcpy(buffer, choice.c_str());
+      send(sd, buffer, sizeof(buffer), 0);
+
+      // player waits for result from server
+      memset(&buffer, 0, sizeof(buffer));
+      recv(sd, buffer, sizeof(buffer), 0);   
+      cout << buffer; 
+   }
 }
 
 // Asks client for there choice and returns int value of that choice
