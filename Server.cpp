@@ -1,274 +1,202 @@
-/** 
- * Created by: Oliver Jeremiah E Fernandez and Milton Melson
- * 
- * Server.cpp
- * 
- * The server side will wait for two clients to connect before 
- * proceeding with the game logic of rock, paper, scissors.
- * Once the two clients have connected, the server waits for two 
- * responses from the clients which will be error checked on client side 
- * prior to sending their answer. The rules will follow basic rock, paper, scissors. 
- * Which is (Rock beats scissors, Scissors beats paper, Paper beats rock).
-*/
+#include "Server.h"
+#include <sstream>
 
-#include <iostream>
-#include <sys/types.h>     // socket, bind 
-#include <sys/socket.h>    // socket, bind, listen, inet_ntoa 
-#include <netinet/in.h>    // htonl, htons, inet_ntoa 
-#include <arpa/inet.h>     // inet_ntoa 
-#include <netdb.h>         // gethostbyname 
-#include <unistd.h>        // read, write, close 
-#include <strings.h>       // bzero 
-#include <netinet/tcp.h>   // SO_REUSEADDR 
-#include <sys/uio.h>       // writev 
-#include <cstring>         // memset 
-
-using namespace std;
-
-// Structure to hold thread data allowing access thread info during each match
-struct thread_data {      
-   int sd;
-   int tid;
-   char* userChoice;
-};
-
-const char* PORT;          // Port number to listen for players on
-int players, thread;       // # of players, and thread counter
-int* scoreboard[2];         // scoreboard to keep track of each players score
-string answers[2];          // String array to store both players answers prior to determining each winner 
-
-
-// helper functions
-int createSocket();  
-void* startGame(void* data);
-void determineWinner(thread_data *ptr);
-
-// Main function, Initializes global data and creates socket
-int main(int argc, char *argv[]) {
-   PORT = PORT = (char*)"8080";
-   players = 2;
-   thread = 0;
-   return createSocket();
-}
-
-/**
- * @brief Creates the socket then listens for players. Once connected it will create a thread
- * for each player calling the start game function.
-*/
-int createSocket() {
-   struct addrinfo hints, *res;        // containers to store address info
-   memset(&hints, 0, sizeof(hints));   // set block of memory to 0
-   hints.ai_family = AF_UNSPEC;        // IPv4 or IPv6
-   hints.ai_socktype = SOCK_STREAM;    // TCP stream sockets
-   hints.ai_flags = AI_PASSIVE;        // fill in my IP for me 
-
-   int status; 
-   if ((status = getaddrinfo(NULL, PORT, &hints, &res)) != 0) {
-      fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
-      return 0;
-   }
-
-   // make a socket
-   int sd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-   if (sd < 0) {
-      perror("Can't create server socket!");
-      return 0;
-   }
-
-   // loss the pesky "Address already in use" error message
-   const int yes = 1;
-   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
-
-   // bind the socket
-   if (bind(sd, res->ai_addr, res->ai_addrlen) < 0) {
-      perror("Can't bind to socket");
-      close(sd);
-      return 0;
-   }
-   
-   cout << "Waiting for players..." << endl;
-   // listen for N request
-   if (listen(sd, players) < 0) {
-      perror("Can't listen!");
-      close(sd);
-      return 0;
-   } 
-
-   // Create a thread for each accepted client
-    struct sockaddr_storage clientAddr;
-    socklen_t clientAddrSize = sizeof(clientAddr);
-    pthread_t tid[players];
-    while (thread < players) {
-      int newSd = accept(sd, (struct sockaddr *)&clientAddr, &clientAddrSize);
-      if (newSd < 0) {
-         cerr << "Unable to accept client...";
-         return 0;
-      }
-      // create a new posix thread for each accepted socket descriptor
-      struct thread_data *data = new thread_data;
-      data->sd = newSd;
-      data->tid = thread;
-      int iret1 = pthread_create(&tid[thread++], NULL, startGame, (void*)data);
-    }
-
-    // Wait for all threads to finished prior to exiting game
-    for (int i = 0; i < thread; i++) {
-      pthread_join(tid[i], NULL);
-    }
-
-   // close socket descriptor
-   close(sd);
-   // free address info stored at res
-   freeaddrinfo(res);
-   return 0;
-}
-
-
-/**
- * @brief Starts the game for each player thread.
- * @param data The current thread_data pointer. Contains thread ID, socket descriptor, and players choice
-*/
-void* startGame(void* data) {
-   thread_data *ptr = (struct thread_data*)data;
-   ptr->userChoice = new char[10];
+Server::Server() {
+   maxPlayers = 2;
    answers[0] = "0";
    answers[1] = "0";
-
-   // player # connected to game
-   cout << "Player " << ptr->tid+1 << " has joined the game!" << endl;
-
-   while (thread < players) {
-      // wait for 2 players 
-   }
-
-   // wait for players to input answer
-   recv(ptr->sd, ptr->userChoice, sizeof(ptr->userChoice), 0);   
-   while (answers[0] == "0" || answers[1] == "0") {
-      // wait for players to pick 
-      answers[ptr->tid] = ptr->userChoice;
-   }
-
-   // Decide winner and send message to clients
-   determineWinner(ptr);
-
-   // close client socket descriptor
-   close(ptr->sd);
-   return data;
+   scoreboard[0] = 0;
+   scoreboard[1] = 0;
+   playersReady = false;
 }
 
-/**
- * @brief Determines the winner of current match, following standard rock, paper, scissors rules.
- * Then sends the players the results of the match.
-*/
-void determineWinner(thread_data *ptr) {
-   string msg;
+Server::~Server() {
+   cout << "\n\nGoodbye..." << endl;
+}
 
+void Server::startGame(void* info) {
+   Player player = *(Player*)info;  // store info into player
+   sendMessage(player, welcomeMessage() + displayRules());
+   waitForPlayers(player);
+
+   // best 2 out of 3
+   int score = scoreboard[player.getID()-1];
+   int enemyScore = scoreboard[(player.getID())%2];
+   while (score < 2 && enemyScore < 2) {
+      stringstream msg;
+      waitForAnswers(player);
+      msg << determineWinner(player);
+      score = scoreboard[player.getID()-1];
+      enemyScore = scoreboard[(player.getID())%2];
+      msg << "\nYour score: " << score 
+      << "\nEnemy score: " << enemyScore << "\n\n";
+      if (score == 2 || enemyScore == 2) {
+         if (score > enemyScore) {
+            msg << "You Won the Match!\n\n";
+         }
+         else {
+            msg << "You Lost the Match!\n\n";
+         }
+         msg << "Exit";
+      }
+      sendMessage(player, msg.str());
+      answers[0] = "0";
+      answers[1] = "0";
+   }
+   close(player.getSD());
+}
+
+string Server::welcomeMessage() {
+   string msg = "\n---------------- Welcome to Roshambo ----------------\n\n";
+   return msg;
+}
+
+string Server::displayRules() {
+   stringstream msg;
+   msg << "\nEach player will pick either rock, paper, or scissors.\n\n" <<
+   "Acceptable Format:\n" << "\n\t(Rock: Rock, rock, R, or r)" <<
+   "\n\t(Paper: Paper, paper, P, or p)" <<
+   "\n\t(Scissors: Scissors, scissors, S, or s)\n\n" << 
+   "How To Win: \n\n(Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n\n\n";
+   string temp = msg.str();
+   return temp;
+}
+
+void Server::waitForPlayers(Player player) {
+   cout << "Player " << player.getID() << " has joined the game!" << endl;
+   if (player.getID() == 2) {
+      playersReady = true;
+   }
+   while (playersReady == false) {
+      // wait for 2 players 
+   }
+}
+
+void Server::waitForAnswers(Player player) {
+   // wait for players to input answer
+   memset(&buffer, 0, sizeof(buffer));
+   recv(player.getSD(), buffer, sizeof(buffer) , 0);
+   player.setChoice(buffer);
+   cout << "Player " << player.getID() << " Choice was: " << player.getChoice() << endl;
+   while (answers[0] == "0" || answers[1] == "0") {
+      // wait for players to pick 
+      answers[player.getID()-1] = player.getChoice();
+   }
+}
+
+string Server::determineWinner(Player player) {
+   string msg;
+   
    // player 1 picks rock
-   if (answers[0].compare("Rock") == 0) {
+   if (answers[0].compare("rock") == 0) {
 
       // player 2 picks paper
-      if (answers[1].compare("Paper") == 0) {
+      if (answers[1].compare("paper") == 0) {
 
          // player 1's thread
-         if (ptr->tid == 0) {
-            msg = "You Lose !!!";
+         if (player.getID() == 1) {
+            msg = "Paper covers Rock, You Lose!";
          }
          // player 2's thread
          else {
             scoreboard[1]++;
-            msg = "You Win !!!";
+            msg = "Paper covers Rock, You Win!";
          }
       }
       // player 2 picks scissors
-      else if (answers[1].compare("Scissors") == 0) {
+      else if (answers[1].compare("scissors") == 0) {
 
          // player 1's thread
-         if (ptr->tid == 0) {
+         if (player.getID() == 1) {
             scoreboard[0]++;
-            msg = "You Win !!!";
+            msg = "Rock smashes Scissors, You Win!";
          }
          // player 2's thread
          else {
-            msg = "You Lose !!!";
+            msg = "Rock smashes Scissors, You Lose!";
          }
       }
       // opponent picks rock
       else {
          // Draw
-         msg = "Game Draw !!!";
+         msg = "Draw!";
       }
    }
    // player 1 picks paper
-   else if (answers[0].compare("Paper") == 0) {
+   else if (answers[0].compare("paper") == 0) {
 
       // player 2 picks Scissors
-      if (answers[1].compare("Scissors") == 0) {
+      if (answers[1].compare("scissors") == 0) {
 
          // player 1's thread
-         if (ptr->tid == 0) {
-            msg = "You Lose !!!";
+         if (player.getID() == 1) {
+            msg = "Scissors cuts paper, You Lose!";
          }
          // player 2's thread
          else {
             scoreboard[1]++;
-            msg = "You Win !!!";
+            msg = "Scissors cuts paper, You Win!";
          }
       }
       // player 2 picks Rock
-      else if (answers[1].compare("Rock") == 0) {
+      else if (answers[1].compare("rock") == 0) {
 
          // player 1's thread
-         if (ptr->tid == 0) {
+         if (player.getID() == 1) {
             scoreboard[0]++;
-            msg = "You Win !!!";
+            msg = "Paper covers Rock, You Win!";
          }
          // player 2's thread
          else {
-            msg = "You Lose !!!";
+            msg = "Paper covers Rock, You Lose!";
          }
       }
       // opponent picks Paper
       else {
          // Draw
-         msg = "Game Draw !!!";
+         msg = "Draw!";
       }
    }
    // player 1 picks Scissors
    else {
 
       // player 2 picks Rock
-      if (answers[1].compare("Rock") == 0) {
+      if (answers[1].compare("rock") == 0) {
 
          // player 1's thread
-         if (ptr->tid == 0) {
-            msg = "You Lose !!!";
+         if (player.getID() == 1) {
+            msg = "Rock smashes Scissors, You Lose!";
          }
          // player 2's thread
          else {
             scoreboard[1]++;
-            msg = "You Win !!!";
+            msg = "Rock smashes Scissors, You Win!";
          }
       }
       // player 2 picks Paper
-      else if (answers[1].compare("Paper") == 0) {
+      else if (answers[1].compare("paper") == 0) {
 
          // player 1's thread
-         if (ptr->tid == 0) {
+         if (player.getID() == 1) {
             scoreboard[0]++;
-            msg = "You Win !!!";
+            msg = "Scissors cuts Paper, You Win!";
          }
          // player 2's thread
          else {
-            msg = "You Lose !!!";
+            msg = "Scissors cuts Paper, You Lose!";
          }
       }
       // opponent picks Paper
       else {
          // Draw
-         msg = "Game Draw !!!";
+         msg = "Draw!";
       }
    }
+   return msg;
+}
 
-   // send appropriate message to current player (thread)
-   send(ptr->sd, msg.c_str(), sizeof(msg), 0);
+void Server::sendMessage(Player player, string msg) {
+   memset(&buffer, 0, sizeof(buffer));
+   strcpy(buffer, msg.c_str());
+   send(player.getSD(), buffer, sizeof(buffer), 0);
 }
