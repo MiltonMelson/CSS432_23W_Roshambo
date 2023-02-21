@@ -16,11 +16,11 @@ void Client::playGame() {
    recv(sd, buffer, sizeof(buffer), 0);   // recieve Welcome message and rules
    cout << buffer;                        // output message
 
-   // best 2 out of 3 (almost)
-   // runs 3 round no matter what atm
-   for (int i = 0; i < 3; i++) {
+   // best 2 out of 3 
+   int round = 1;
+   while (true) {
       // message for each round
-      cout << "Round: " << i+1 << endl;
+      cout << "Round: " << round++ << endl;
 
       // player makes choice and send to server
       makeChoice();
@@ -32,6 +32,10 @@ void Client::playGame() {
       memset(&buffer, 0, sizeof(buffer));
       recv(sd, buffer, sizeof(buffer), 0);   
       cout << buffer; 
+      string result(buffer);
+      if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
+         break;
+      }
    }
 }
 

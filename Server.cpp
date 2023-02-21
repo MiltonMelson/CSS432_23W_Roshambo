@@ -19,19 +19,31 @@ void Server::startGame(void* info) {
    sendMessage(player, welcomeMessage() + displayRules());
    waitForPlayers(player);
 
-   // best 2 out of 3 (almost)
-   // runs 3 round no matter what atm
-   for (int i = 0; i < 3; i++) {
+   // best 2 out of 3
+   int score = scoreboard[player.getID()-1];
+   int enemyScore = scoreboard[(player.getID())%2];
+   while (score < 2 && enemyScore < 2) {
       stringstream msg;
       waitForAnswers(player);
       msg << determineWinner(player);
-      msg << "\nYour score: " << scoreboard[player.playerNumber-1] 
-      << "\nEnemy score: " << scoreboard[(player.playerNumber)%2] << "\n\n";
+      score = scoreboard[player.getID()-1];
+      enemyScore = scoreboard[(player.getID())%2];
+      msg << "\nYour score: " << score 
+      << "\nEnemy score: " << enemyScore << "\n\n";
+      if (score == 2 || enemyScore == 2) {
+         if (score > enemyScore) {
+            msg << "You Won the Match!\n\n";
+         }
+         else {
+            msg << "You Lost the Match!\n\n";
+         }
+         msg << "Exit";
+      }
       sendMessage(player, msg.str());
       answers[0] = "0";
       answers[1] = "0";
    }
-   close(player.socketDescriptor);
+   close(player.getSD());
 }
 
 string Server::welcomeMessage() {
@@ -51,8 +63,8 @@ string Server::displayRules() {
 }
 
 void Server::waitForPlayers(Player player) {
-   cout << "Player " << player.playerNumber << " has joined the game!" << endl;
-   if (player.playerNumber == 2) {
+   cout << "Player " << player.getID() << " has joined the game!" << endl;
+   if (player.getID() == 2) {
       playersReady = true;
    }
    while (playersReady == false) {
@@ -63,12 +75,12 @@ void Server::waitForPlayers(Player player) {
 void Server::waitForAnswers(Player player) {
    // wait for players to input answer
    memset(&buffer, 0, sizeof(buffer));
-   recv(player.socketDescriptor, buffer, sizeof(buffer) , 0);
-   player.choice = buffer;
-   cout << "Player " << player.playerNumber << " Choice was: " << player.choice << endl;
+   recv(player.getSD(), buffer, sizeof(buffer) , 0);
+   player.setChoice(buffer);
+   cout << "Player " << player.getID() << " Choice was: " << player.getChoice() << endl;
    while (answers[0] == "0" || answers[1] == "0") {
       // wait for players to pick 
-      answers[player.playerNumber-1] = player.choice;
+      answers[player.getID()-1] = player.getChoice();
    }
 }
 
@@ -82,7 +94,7 @@ string Server::determineWinner(Player player) {
       if (answers[1].compare("paper") == 0) {
 
          // player 1's thread
-         if (player.playerNumber == 1) {
+         if (player.getID() == 1) {
             msg = "Paper covers Rock, You Lose!";
          }
          // player 2's thread
@@ -95,7 +107,7 @@ string Server::determineWinner(Player player) {
       else if (answers[1].compare("scissors") == 0) {
 
          // player 1's thread
-         if (player.playerNumber == 1) {
+         if (player.getID() == 1) {
             scoreboard[0]++;
             msg = "Rock smashes Scissors, You Win!";
          }
@@ -117,7 +129,7 @@ string Server::determineWinner(Player player) {
       if (answers[1].compare("scissors") == 0) {
 
          // player 1's thread
-         if (player.playerNumber == 1) {
+         if (player.getID() == 1) {
             msg = "Scissors cuts paper, You Lose!";
          }
          // player 2's thread
@@ -130,7 +142,7 @@ string Server::determineWinner(Player player) {
       else if (answers[1].compare("rock") == 0) {
 
          // player 1's thread
-         if (player.playerNumber == 1) {
+         if (player.getID() == 1) {
             scoreboard[0]++;
             msg = "Paper covers Rock, You Win!";
          }
@@ -152,7 +164,7 @@ string Server::determineWinner(Player player) {
       if (answers[1].compare("rock") == 0) {
 
          // player 1's thread
-         if (player.playerNumber == 1) {
+         if (player.getID() == 1) {
             msg = "Rock smashes Scissors, You Lose!";
          }
          // player 2's thread
@@ -165,7 +177,7 @@ string Server::determineWinner(Player player) {
       else if (answers[1].compare("paper") == 0) {
 
          // player 1's thread
-         if (player.playerNumber == 1) {
+         if (player.getID() == 1) {
             scoreboard[0]++;
             msg = "Scissors cuts Paper, You Win!";
          }
@@ -186,5 +198,5 @@ string Server::determineWinner(Player player) {
 void Server::sendMessage(Player player, string msg) {
    memset(&buffer, 0, sizeof(buffer));
    strcpy(buffer, msg.c_str());
-   send(player.socketDescriptor, buffer, sizeof(buffer), 0);
+   send(player.getSD(), buffer, sizeof(buffer), 0);
 }
