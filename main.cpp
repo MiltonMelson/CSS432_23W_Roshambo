@@ -2,7 +2,8 @@
  * Created by: Oliver Jeremiah E Fernandez and Milton Melson
 */
 
-#include "Roshambo.h"
+#include "Client.h"
+#include "Server.h"
 
 int main(int argc, char *argv[]) {
    // server
@@ -12,10 +13,9 @@ int main(int argc, char *argv[]) {
    }
    // client
    else if (argc == 2) {
-      Socket client;
-      client.createClient(argv[1]);
-      Roshambo player;
-      player.enterLobby();
+      Socket socket;
+      socket.createClient(argv[1]);
+      Client player(socket.getClientSD());
    }
    return 0;
 }

@@ -1,21 +1,23 @@
 
-#include "Roshambo.h"
+#include "Server.h"
 #include "Socket.h"
 
 Socket::Socket() {
    PORT = (char*)"8080";
-   maxPlayers = 2; 
+   maxThreads = 2; 
+   threadCount = 0;
 }
 
 Socket::~Socket() {
    // close socket descriptor
-   close(sd);
+   close(clientSD);
+   close(serverSD);
    // free address info stored at res
    freeaddrinfo(res);
 }
 
 void* threadFunc(void *data) {
-   Roshambo game;
+   Server game;
    game.startGame(data);
    return data;
 }
@@ -34,17 +36,17 @@ void Socket::createServer() {
    }
 
    // make a socket
-   if ((sd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+   if ((serverSD = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
       cerr << "Error: Creating socket" << endl;
       return;
    }
 
    // loss the pesky "Address already in use" error message
    const int yes = 1;
-   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
+   setsockopt(serverSD, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
 
    // bind the socket
-   if (bind(sd, res->ai_addr, res->ai_addrlen) < 0) {
+   if (bind(serverSD, res->ai_addr, res->ai_addrlen) < 0) {
       cerr << "Error: failed to bind to socket" << endl;
       return;
    }
@@ -52,7 +54,7 @@ void Socket::createServer() {
    cout << "Waiting for players..." << endl;
 
    // listen for N request
-   if (listen(sd, maxPlayers) < 0) {
+   if (listen(serverSD, maxThreads) < 0) {
       cerr << "Error: listening for players" << endl;
       return;
    } 
@@ -60,28 +62,22 @@ void Socket::createServer() {
    // Create a thread for each accepted client
    struct sockaddr_storage clientAddr;
    socklen_t clientAddrSize = sizeof(clientAddr);
-   pthread_t tid[maxPlayers];
-
-   while (threadCount < maxPlayers) {
-
-      int newSd = accept(sd, (struct sockaddr *)&clientAddr, &clientAddrSize);
-
+   pthread_t tid[maxThreads];
+   while (threadCount < maxThreads) {
+      int newSd = accept(serverSD, (struct sockaddr *)&clientAddr, &clientAddrSize);
       if (newSd < 0) {
          cerr << "Error: accepting player" << endl;
          return;
       }
-
       // create a new posix thread for each accepted player
-      playerInfo *data = new playerInfo;
-      data->sd = newSd;
-      data->ID = threadCount;
-      int iret1 = pthread_create(&tid[threadCount], NULL, threadFunc, (void*)data);
-      ++threadCount;
+      Player data(newSd, threadCount+1);
+      int iret1 = pthread_create(&tid[threadCount], NULL, threadFunc, (void*)&data);
+      threadCount++;
    }
 
    // Wait for child threads
    for (int i = 0; i < threadCount; i++) {
-   pthread_join(tid[i], NULL);
+      pthread_join(tid[i], NULL);
    }
 }
 
@@ -100,21 +96,25 @@ void Socket::createClient(const char* destinationAddr) {
    }
 
    // create a socket
-   if ((sd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+   if ((clientSD = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
       cerr << "Error: Creating socket" << endl;
       return;
    }
 
    // loss the pesky "Address already in use" error message 
    const int yes = 1;
-   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
+   setsockopt(clientSD, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
 
    printf("Connecting to Server...\n\n");
    // connect to server through socket descriptor
-   if (connect(sd, res->ai_addr, res->ai_addrlen) < 0) {
+   if (connect(clientSD, res->ai_addr, res->ai_addrlen) < 0) {
       cerr << "Error: Connecting to server" << endl;
-      close(sd);
+      close(clientSD);
       return;
    }
 
+}
+
+int Socket::getClientSD() {
+   return clientSD;
 }

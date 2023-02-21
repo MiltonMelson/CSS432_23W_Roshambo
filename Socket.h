@@ -13,19 +13,19 @@
 
 using namespace std;
 
-static int threadCount;                       // thread counter
-
 class Socket {
    public:
       Socket();  
       ~Socket();
       void createServer();
       void createClient(const char* destinationAddr);
+      int getClientSD();
 
    private:
       const char* PORT;                // port number to listen on
       struct addrinfo hints, *res;     // containers to store address info
-      int sd;                          // Socket Descriptor
-      int maxPlayers;                  // Max players (threads)
+      int serverSD, clientSD;          // Socket Descriptor
+      int maxThreads;                  // Max players (threads)
+      int threadCount;                 // thread counter
 };
 #endif
