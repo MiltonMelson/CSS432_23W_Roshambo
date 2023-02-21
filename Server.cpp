@@ -30,7 +30,7 @@ void Server::startGame(void* info) {
       enemyScore = scoreboard[(player.getID())%2];
       msg << "\nYour score: " << score 
       << "\nEnemy score: " << enemyScore << "\n\n";
-      if (score == 2 || enemyScore == 2) {
+      if (score == 2 || enemyScore == 2 || answers[0] == "" || answers[1] == "") {
          if (score > enemyScore) {
             msg << "You Won the Match!\n\n";
          }
@@ -85,8 +85,16 @@ void Server::waitForAnswers(Player player) {
 }
 
 string Server::determineWinner(Player player) {
-   string msg;
+   if (answers[0] == "") {
+      scoreboard[1]++;
+      return "Player 1 left the game...\n";
+   }
+   if (answers[1] == "") {
+      scoreboard[0]++;
+      return "Player 2 left the game...\n";
+   }
    
+   string msg;
    // player 1 picks rock
    if (answers[0].compare("rock") == 0) {
 
