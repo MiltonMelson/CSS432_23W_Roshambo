@@ -7,7 +7,8 @@
    - "make clean"
 
 ### To run
-   - ./test "Server IP address"
+   - Server ./test
+   - Client ./test "Server IP address"
 
 # Game Play
 <img width="1173" alt="Screenshot 2023-01-16 at 10 43 36 AM" src="./game_play_screenshot.png">
