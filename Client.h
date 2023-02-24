@@ -11,9 +11,9 @@ class Client {
       Client(int socket);
       ~Client();
       void makeChoice();
-      int convertAnswer(string input);
+      int convertAnswer(string &input);
       void playGame();
-
+      void convertToLower(string &input);
    private:
       int sd;
       string choice;

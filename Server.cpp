@@ -40,8 +40,6 @@ void Server::startGame(void* info) {
          msg << "Exit";
       }
       sendMessage(player, msg.str());
-      answers[0] = "0";
-      answers[1] = "0";
    }
    close(player.getSD());
 }
@@ -54,9 +52,6 @@ string Server::welcomeMessage() {
 string Server::displayRules() {
    stringstream msg;
    msg << "\nEach player will pick either rock, paper, or scissors.\n\n" <<
-   "Acceptable Format:\n" << "\n\t(Rock: Rock, rock, R, or r)" <<
-   "\n\t(Paper: Paper, paper, P, or p)" <<
-   "\n\t(Scissors: Scissors, scissors, S, or s)\n\n" << 
    "How To Win: \n\n(Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n\n\n";
    string temp = msg.str();
    return temp;
@@ -64,12 +59,15 @@ string Server::displayRules() {
 
 void Server::waitForPlayers(Player player) {
    cout << "Player " << player.getID() << " has joined the game!" << endl;
+
+   // if the second player has arrived
    if (player.getID() == 2) {
       playersReady = true;
    }
    while (playersReady == false) {
       // wait for 2 players 
    }
+
 }
 
 void Server::waitForAnswers(Player player) {
@@ -82,18 +80,16 @@ void Server::waitForAnswers(Player player) {
       // wait for players to pick 
       answers[player.getID()-1] = player.getChoice();
    }
+   // if one of the players leave send last message with Exit flag at end of message
+   if (answers[0] == "" && answers[1] != "") {
+      sendMessage(player, "Player 1 has left the game! You Win!Exit");
+   }
+   if (answers[0] != "" && answers[1] == "") {
+      sendMessage(player, "Player 2 has left the game! You Win!Exit");
+   }
 }
 
 string Server::determineWinner(Player player) {
-   if (answers[0] == "") {
-      scoreboard[1]++;
-      return "Player 1 left the game...\n";
-   }
-   if (answers[1] == "") {
-      scoreboard[0]++;
-      return "Player 2 left the game...\n";
-   }
-   
    string msg;
    // player 1 picks rock
    if (answers[0].compare("rock") == 0) {
@@ -200,6 +196,8 @@ string Server::determineWinner(Player player) {
          msg = "Draw!";
       }
    }
+   answers[0] = "0";
+   answers[1] = "0";
    return msg;
 }
 
