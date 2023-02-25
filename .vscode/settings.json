@@ -1,6 +1,13 @@
 {
    "files.associations": {
       "new": "cpp",
-      "iosfwd": "cpp"
+      "iosfwd": "cpp",
+      "string": "cpp",
+      "iostream": "cpp",
+      "fstream": "cpp",
+      "array": "cpp",
+      "string_view": "cpp",
+      "initializer_list": "cpp",
+      "utility": "cpp"
    }
 }

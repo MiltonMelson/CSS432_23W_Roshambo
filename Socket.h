@@ -28,4 +28,5 @@ class Socket {
       int maxThreads;                  // Max players (threads)
       int threadCount;                 // thread counter
 };
+
 #endif

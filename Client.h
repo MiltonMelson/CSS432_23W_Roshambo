@@ -10,14 +10,18 @@ class Client {
       Client();
       Client(int socket);
       ~Client();
-      void makeChoice();
-      int convertAnswer(string &input);
+      void menuChoice();
       void playGame();
-      void convertToLower(string &input);
+      void makeChoice();
    private:
       int sd;
       string choice;
       char buffer[8000];
+
+      int convertAnswer(string &input);
+      void convertToLower(string &input);
+      void sendMsg(string msg);
+      void recvMsg(int sd);
 };
 
 #endif
