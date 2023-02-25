@@ -23,8 +23,6 @@ class Player {
       void setDraw();
       void setGuest();
       bool isGuest();
-      void offline();
-      bool isDisconnected();
    
    private:
       int socketDescriptor;
@@ -34,7 +32,6 @@ class Player {
       int round;
       int match;
       int draw;
-      bool online;
       bool guest;
 };
 

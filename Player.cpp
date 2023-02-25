@@ -5,7 +5,6 @@ Player::Player() {}
 Player::Player(int sd, int num) {
    socketDescriptor = sd;
    playerNumber = num;
-   online = true;
    guest = false;
 }
 
@@ -73,12 +72,4 @@ void Player::setGuest() {
 
 bool Player::isGuest() {
    return guest;
-}
-
-void Player::offline() {
-   online = false;
-}
-
-bool Player::isDisconnected() {
-   return online;
 }
