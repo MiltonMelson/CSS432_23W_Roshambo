@@ -2,6 +2,7 @@
 #define SERVER_H
 
 #include "Player.h"
+#include "Data.h"
 #include "Socket.h"
 
 static int scoreboard[2];           // scoreboard to keep track of each players score
@@ -16,6 +17,7 @@ class Server {
       void startGame(void* info);
       string welcomeMessage();
       string displayRules();
+      string displayBoard();
       void waitForPlayers(Player player);
       void waitForAnswers(Player player);
       string determineWinner(Player player);

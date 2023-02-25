@@ -2,6 +2,8 @@
 #include <fstream>
 #include <queue>
 
+// Need to fully test
+
 Data::Data() {}
 
 Data::Data(string db) {
@@ -123,6 +125,11 @@ bool Data::regUser() {
    remove(database.c_str());
    rename("temp.txt", database.c_str());
    return true;
+}
+
+// 
+bool Data::logUser(Player player) {
+   return false;
 }
 
 string* Data::readLine(string reader) {

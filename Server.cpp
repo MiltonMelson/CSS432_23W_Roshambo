@@ -15,6 +15,7 @@ Server::~Server() {
    cout << "\n\nGoodbye..." << endl;
 }
 
+// In progress
 void Server::startMenu(Player player) {
    bool wait = true;
    int ans = 0;
@@ -28,7 +29,7 @@ void Server::startMenu(Player player) {
             sendMsg(player, displayRules());
             break;
          case 2:
-            //sendMsg(player, displayBoard());
+            sendMsg(player, displayBoard());
             break;
          case 3:
             //Register User
@@ -98,6 +99,13 @@ string Server::displayRules() {
    msg << "\nEach player will pick either rock, paper, or scissors.\n\n" <<
    "How To Win: \n\n(Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n\n\n";
    string temp = msg.str();
+   return temp;
+}
+
+// In progress
+string Server::displayBoard() {
+   stringstream msg;
+   string temp;
    return temp;
 }
 
