@@ -2,13 +2,12 @@
 #include <sstream>
 
 Server::Server() {
-   maxPlayers = 2;
-
-   answers[0] = "0";
-   answers[1] = "0";
-   scoreboard[0] = 0;
+   maxPlayers = 2;         // current player capacity of the game
+   answers[0] = "0";       // set answers to 0
+   answers[1] = "0";    
+   scoreboard[0] = 0;      // sets temp scoreboard to 0
    scoreboard[1] = 0;
-   playersReady = false;
+   playersReady = false;   // flag to tell both players have arrived
 }
 
 Server::~Server() {
@@ -51,26 +50,36 @@ void Server::startMenu(Player player) {
 void Server::startGame(void* info) {
    Player player = *(Player*)info;  // store info into player
    startMenu(player);
-   waitForPlayers(player);
+   waitForPlayers(player); // waits for both players to join the game before 
 
-   // best 2 out of 3
+   // gets the current players score and their enemies score
    int score = scoreboard[player.getID()-1];
    int enemyScore = scoreboard[(player.getID())%2];
+
+   // best 2 out of 3
    while (score < 2 && enemyScore < 2) {
+
+      waitForAnswers(player); // waits for both players to submit answers before proceeding 
+
       stringstream msg;
-      waitForAnswers(player);
-      msg << determineWinner(player);
-      score = scoreboard[player.getID()-1];
-      enemyScore = scoreboard[(player.getID())%2];
+      msg << determineWinner(player);  // determine the winner and the resulting message for each player
+
+      score = scoreboard[player.getID()-1];  // gets current players score
+      enemyScore = scoreboard[(player.getID())%2]; // gets the current players enemy score
+
       msg << "\nYour score: " << score 
       << "\nEnemy score: " << enemyScore << "\n\n";
-      if (score == 2 || enemyScore == 2 || answers[0] == "" || answers[1] == "") {
+
+      // if either score is 2 then someone won
+      if (score == 2 || enemyScore == 2) {
+         // if its the current player then they won
          if (score > enemyScore) {
             msg << "You Won the Match!\n\n";
             if (!player.isGuest()) {
                player.setMatch();
             }
          }
+         // if not then they lost
          else {
             msg << "You Lost the Match!\n\n";
          }
@@ -79,9 +88,9 @@ void Server::startGame(void* info) {
          }
          msg << "Exit";
       }
-      sendMsg(player, msg.str());
+      sendMsg(player, msg.str());   // sned a string message to the current player
    }
-   close(player.getSD());
+   close(player.getSD());  // close players socket descriptor
 }
 
 string Server::welcomeMessage() {
@@ -111,13 +120,12 @@ string Server::displayBoard() {
 
 void Server::waitForPlayers(Player player) {
    cout << "Player " << player.getID() << " has joined the game!" << endl;
-
    // if the second player has arrived
    if (player.getID() == 2) {
       playersReady = true;
    }
    while (playersReady == false) {
-      // wait for 2 players 
+      // wait for player 2 
    }
 
 }
