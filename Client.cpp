@@ -11,10 +11,26 @@ Client::~Client() {
    cout << "\n\nGoodbye..." << endl;
 }
 
+void Client::menuChoice() {
+   string ans = "0";
+   while (ans.compare("0") == 0) {
+      cout << "Type in your option (1 - 6): ";
+      cin >> ans;
+      if (isdigit(ans[0])) {
+         if (stoi(ans) > 1 || stoi(ans) < 6) {
+            break;
+         }
+      }
+      ans = "0";
+      cout << "Invalid option.\n";
+   }
+
+   sendMsg(ans);
+}
+
 void Client::playGame() {
-   memset(&buffer, 0, sizeof(buffer));    // clear buffer
-   recv(sd, buffer, sizeof(buffer), 0);   // recieve Welcome message and rules
-   cout << buffer;                        // output message
+   recvMsg(sd); // clears buffer and receives welcome message
+   cout << buffer; // output message
 
    // best 2 out of 3 
    int round = 1;
@@ -24,13 +40,10 @@ void Client::playGame() {
 
       // player makes choice and send to server
       makeChoice();
-      memset(&buffer, 0, sizeof(buffer));
-      strcpy(buffer, choice.c_str());
-      send(sd, buffer, sizeof(buffer), 0);
+      sendMsg(choice);
 
       // player waits for result from server
-      memset(&buffer, 0, sizeof(buffer));
-      recv(sd, buffer, sizeof(buffer), 0);   
+      recvMsg(sd); 
       string result(buffer);
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
@@ -69,7 +82,18 @@ int Client::convertAnswer(string &input) {
 void Client::convertToLower(string &input) {
    for (int i = 0; i < input.length(); i++) {
       if (input[i] > 'A' && input[i] < 'Z') {
-         input[i] = input[i]+32;
+         input[i] = input[i] + 32;
       }
    }
+}
+
+void Client::sendMsg(string msg) {
+   memset(&buffer, 0, sizeof(buffer));
+   strcpy(buffer, msg.c_str());
+   send(sd, buffer, sizeof(buffer), 0);
+}
+
+void Client::recvMsg(int sd) {
+   memset(&buffer, 0, sizeof(buffer));
+   recv(sd, buffer, sizeof(buffer), 0); 
 }
