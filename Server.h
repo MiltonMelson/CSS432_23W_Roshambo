@@ -13,8 +13,8 @@ class Server {
    public:
       Server();
       ~Server();
-      void startMenu(Player player);
-      void startGame(void* info);
+      void startMenu(void* info);
+      void startGame(Player player);
       string welcomeMessage();
       string displayRules();
       string displayBoard();

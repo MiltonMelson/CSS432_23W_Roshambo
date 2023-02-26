@@ -11,7 +11,7 @@ Client::~Client() {
    cout << "\n\nGoodbye..." << endl;
 }
 
-void Client::menuChoice() {
+string Client::menuChoice() {
    string ans = "0";
    while (ans.compare("0") == 0) {
       cout << "Type in your option (1 - 6): ";
@@ -26,12 +26,26 @@ void Client::menuChoice() {
    }
 
    sendMsg(ans);
+   return ans;
 }
 
 void Client::playGame() {
-   recvMsg(sd); // clears buffer and receives welcome message
-   cout << buffer; // output message
+   string option = "0";
+   while (option.compare("6") != 0) {
+      recvMsg(sd); // clears buffer and receives welcome message
+      cout << buffer; // output message
+      option = menuChoice();
+      if (option.compare("1") == 0) {}
+      if (option.compare("2") == 0) {}
+      if (option.compare("3") == 0) {}
+      if (option.compare("4") == 0) {}
+      if (option.compare("5") == 0) {
+         bestOutOfThree();
+      }
+   }
+}
 
+void Client::bestOutOfThree() {
    // best 2 out of 3 
    int round = 1;
    while (true) {
@@ -67,6 +81,7 @@ void Client::makeChoice() {
 // converts string input from userChoice to verify correct input
 int Client::convertAnswer(string &input) {
    convertToLower(input);
+   cout << input << endl;
    if (input.compare("rock") == 0) {
       return 0;
    }
@@ -81,7 +96,7 @@ int Client::convertAnswer(string &input) {
 
 void Client::convertToLower(string &input) {
    for (int i = 0; i < input.length(); i++) {
-      if (input[i] > 'A' && input[i] < 'Z') {
+      if (input[i] >= 'A' && input[i] <= 'Z') {
          input[i] = input[i] + 32;
       }
    }

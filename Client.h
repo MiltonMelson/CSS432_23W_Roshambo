@@ -10,9 +10,11 @@ class Client {
       Client();
       Client(int socket);
       ~Client();
-      void menuChoice();
+      string menuChoice();
       void playGame();
       void makeChoice();
+      void bestOutOfThree();
+      
    private:
       int sd;
       string choice;
