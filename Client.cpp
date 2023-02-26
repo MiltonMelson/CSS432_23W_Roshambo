@@ -30,16 +30,31 @@ string Client::menuChoice() {
 }
 
 void Client::playGame() {
+   recvMsg(sd); // recieve welcome message
+   cout << buffer; 
+
+   // Direct client to selected menu option
    string option = "0";
    while (option.compare("6") != 0) {
-      recvMsg(sd); // clears buffer and receives welcome message
-      cout << buffer; // output message
-      option = menuChoice();
-      if (option.compare("1") == 0) {}
-      if (option.compare("2") == 0) {}
-      if (option.compare("3") == 0) {}
-      if (option.compare("4") == 0) {}
-      if (option.compare("5") == 0) {
+      recvMsg(sd);   // recieve the menu message
+      cout << buffer; 
+
+      option = menuChoice();  // Gives user a menu to select from
+
+      // handles the result from selected menu item
+
+      // recieve the rules message
+      if (option.compare("1") == 0) {
+         recvMsg(sd);
+         cout << buffer;
+         sleep(3);
+      }
+      // display the scoreboard
+      else if (option.compare("2") == 0) {}
+      else if (option.compare("3") == 0) {}
+      else if (option.compare("4") == 0) {}
+      // begins a match best 2 out of 3
+      else if (option.compare("5") == 0) {
          bestOutOfThree();
       }
    }
@@ -50,7 +65,7 @@ void Client::bestOutOfThree() {
    int round = 1;
    while (true) {
       // message for each round
-      cout << "Round: " << round++ << endl;
+      cout << "\nRound: " << round++ << endl;
 
       // player makes choice and send to server
       makeChoice();
@@ -59,11 +74,18 @@ void Client::bestOutOfThree() {
       // player waits for result from server
       recvMsg(sd); 
       string result(buffer);
+       recvMsg(sd); 
+       result += buffer;
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
-         return;
+         break;
       }
       cout << result;
+   }
+   char gameover[11] = {'G', 'a', 'm', 'e', ' ', 'O', 'v', 'e', 'r', '!', '\n'};
+   for (int i = 0; i < 11; i++) {
+      cout << gameover[i] << "\n";
+      sleep(1);
    }
 }
 
@@ -81,7 +103,6 @@ void Client::makeChoice() {
 // converts string input from userChoice to verify correct input
 int Client::convertAnswer(string &input) {
    convertToLower(input);
-   cout << input << endl;
    if (input.compare("rock") == 0) {
       return 0;
    }

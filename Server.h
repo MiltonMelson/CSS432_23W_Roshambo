@@ -5,9 +5,9 @@
 #include "Data.h"
 #include "Socket.h"
 
-static int scoreboard[2];           // scoreboard to keep track of each players score
-static string answers[2];           // String array to store both players answers prior to determining each winner 
-static bool playersReady;
+static int scoreboard[5];           // scoreboard to keep track of each players score
+static string answers[5];           // String array to store both players answers prior to determining each winner 
+static int roster[5];               // current players active in game
 
 class Server {
    public:
@@ -15,12 +15,14 @@ class Server {
       ~Server();
       void startMenu(void* info);
       void startGame(Player player);
-      string welcomeMessage();
-      string displayRules();
-      string displayBoard();
+      void welcomeMessage(Player player);
       void waitForPlayers(Player player);
       void waitForAnswers(Player player);
-      string determineWinner(Player player);
+      int getEnemyIndex(Player player);
+      void menuMessage(Player player);
+      void displayRules(Player player);
+      void determineWinner(Player player);
+      string displayBoard();
 
    private:
       int maxPlayers;
