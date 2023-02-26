@@ -15,11 +15,12 @@ Server::~Server() {
 }
 
 // In progress
-void Server::startMenu(Player player) {
-   bool wait = true;
+void Server::startMenu(void* info) {
+   Player player = *(Player*)info;  // store info into player
+   bool exit = false;
    int ans = 0;
 
-   while (wait) {
+   while (!exit) {
       sendMsg(player, welcomeMessage());
       recvMsg(player);
       ans = atoi(buffer);
@@ -37,9 +38,12 @@ void Server::startMenu(Player player) {
             // Sign in as User
             break;
          case 5:
+            startGame(player);
             player.setGuest();
-            wait = false;
             break;
+         case 6:
+            exit = true;
+            return;
          default:
             continue;
       }
@@ -47,9 +51,7 @@ void Server::startMenu(Player player) {
    }
 }
 
-void Server::startGame(void* info) {
-   Player player = *(Player*)info;  // store info into player
-   startMenu(player);
+void Server::startGame(Player player) {
    waitForPlayers(player); // waits for both players to join the game before 
 
    // gets the current players score and their enemies score
@@ -96,17 +98,17 @@ void Server::startGame(void* info) {
 string Server::welcomeMessage() {
    stringstream msg;
    msg << "\n---------------- Welcome to Roshambo ----------------\n\n" <<
-   "Main Menu:\n> 1: View the rules\n2: View an existing player's stats \n" <<
-   "> 3: View the leaderboard\n> 4: Register as a new player\n" <<
-   "> 5: Log in as an existing player\n> 6: Play as a guest\n\n";
+   "Main Menu:\n1: View the rules\n" << "2: View the leaderboard\n3: Register as a new player\n" <<
+   "4: Log in as an existing player\n5: Play as a guest\n6: Exit Game\n\n";
    string temp = msg.str();
    return temp;
 }
 
 string Server::displayRules() {
    stringstream msg;
-   msg << "\nEach player will pick either rock, paper, or scissors.\n\n" <<
-   "How To Win: \n\n(Rock beats Scissors, Scissors beats Paper, Paper beats Rock)\n\n\n";
+   msg << "\n~~~ How To Win ~~~\n\n" <<
+   "Each player will pick either rock, paper, or scissors." <<
+   "\n - Rock breaks Scissors\n - Scissors cuts Paper\n - Paper covers Rock\n\n\n";
    string temp = msg.str();
    return temp;
 }

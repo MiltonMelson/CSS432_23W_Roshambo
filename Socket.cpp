@@ -17,7 +17,7 @@ Socket::~Socket() {
 
 void* threadFunc(void *data) {
    Server game;
-   game.startGame(data);
+   game.startMenu(data);
    return data;
 }
 
