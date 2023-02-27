@@ -71,6 +71,7 @@ void Client::bestOutOfThree() {
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
          break;
+         break;
       }
       cout << result;
    }

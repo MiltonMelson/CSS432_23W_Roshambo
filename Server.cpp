@@ -38,6 +38,7 @@ void Server::startMenu(void* info) {
       switch(ans) {
          case 1:
             displayRules(player);
+            displayRules(player);
             break;
          case 2:
             sendMsg(player, displayBoard());
@@ -70,13 +71,13 @@ void Server::startGame(Player &player) {
    int enemyScore = 0;
    int round = 1;
 
-   // best 2 out of 3
    while (score < 2 && enemyScore < 2) {
       stringstream msg;
       msg << "\nRound " << round++ << endl;  // message for each round
       sendMsg(player, msg.str());
 
-      waitForAnswers(player); // waits for both players to submit answers before proceeding 
+      score = scoreboard[player.getID()];
+      enemyScore = scoreboard[getEnemyIndex(player)];
 
       determineWinner(player);  // determine the winner and the resulting message for each player
 
@@ -155,7 +156,6 @@ void Server::determineWinner(Player &player) {
          msg << "You Won\n\nRock smashes Scissors!";
          scoreboard[player.getID()]++;
       }
-      // opponent picks rock
       else {
          // Draw
          msg << "Draw!";
@@ -252,4 +252,37 @@ void Server::sendMsg(Player &player, string msg) {
 void Server::recvMsg(Player &player) {
    memset(&buffer, 0, sizeof(buffer));
    recv(player.getSD(), buffer, sizeof(buffer) , 0);
+}
+
+int Server::getEnemyIndex(Player player) {
+   return player.getID()%2 == 1 ? player.getID()+1 : player.getID()-1;
+}
+
+void Server::welcomeMessage(Player player) {
+   stringstream msg;
+   msg << "\n---------------- Welcome to Roshambo ----------------\n\n";
+   string temp = msg.str();
+   sendMsg(player, temp);
+}
+
+void Server::menuMessage(Player player) {
+   stringstream msg;
+   msg << "Main Menu:\n" << 
+   "1: View the rules\n" << 
+   "2: View the leaderboard\n" << 
+   "3: Register as a new player\n" <<
+   "4: Log in as an existing player\n" << 
+   "5: Play as a guest\n" <<
+   "6: Exit Game\n\n";
+   string temp = msg.str();
+   sendMsg(player, temp);
+}
+
+void Server::displayRules(Player player) {
+   stringstream msg;
+   msg << "\n~~~~~~ Rules ~~~~~~\n\n" <<
+   "Each player will pick either rock, paper, or scissors." <<
+   "\n - Rock breaks Scissors\n - Scissors cuts Paper\n - Paper covers Rock\n\n\n";
+   string temp = msg.str();
+   sendMsg(player, temp);
 }
