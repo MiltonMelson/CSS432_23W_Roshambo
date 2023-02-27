@@ -14,8 +14,9 @@ int main(int argc, char *argv[]) {
    // client
    else if (argc == 2) {
       Socket socket;
-      socket.createClient(argv[1]);
-      Client player(socket.getClientSD());
+      if (socket.createClient(argv[1])) {
+         Client player(socket.getClientSD());
+      }
    }
    return 0;
 }

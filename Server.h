@@ -5,31 +5,32 @@
 #include "Data.h"
 #include "Socket.h"
 
-static int scoreboard[5];           // scoreboard to keep track of each players score
-static string answers[5];           // String array to store both players answers prior to determining each winner 
-static int roster[5];               // current players active in game
+const int numOfPlayers = 13;           // max number of threads/players (adjusted +1 for indexing purposes)         
+extern int roster[numOfPlayers];       // the current roster of who is online
+extern int scoreboard[numOfPlayers];   // the temp scoreboard of each match           
+extern string answers[numOfPlayers];   // stores the clients answers from each thread 
+extern bool threadLock;
 
 class Server {
    public:
       Server();
       ~Server();
       void startMenu(void* info);
-      void startGame(Player player);
-      void welcomeMessage(Player player);
-      void waitForPlayers(Player player);
-      void waitForAnswers(Player player);
-      int getEnemyIndex(Player player);
-      void menuMessage(Player player);
-      void displayRules(Player player);
-      void determineWinner(Player player);
+      void startGame(Player &player);
+      void welcomeMessage(Player &player);
+      void menuMessage(Player &player);
+      void displayRules(Player &player);
+      void waitForPlayers(Player &player);
+      void waitForAnswers(Player &player);
+      void determineWinner(Player &player);
+      int getEnemyIndex(Player &player);
       string displayBoard();
 
    private:
-      int maxPlayers;
       char buffer[8000];
 
-      void sendMsg(Player player, string msg);
-      void recvMsg(Player player);
+      void sendMsg(Player &player, string msg);
+      void recvMsg(Player &player);
 };
 
 #endif

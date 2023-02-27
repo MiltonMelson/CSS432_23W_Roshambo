@@ -1,17 +1,27 @@
 #include "Server.h"
+#include <chrono>
 #include <sstream>
+#include <thread>
+
+
+int roster[numOfPlayers];
+int scoreboard[numOfPlayers];           
+string answers[numOfPlayers]; 
+string results[numOfPlayers]; 
+bool threadLock;         
 
 Server::Server() {
-   maxPlayers = 4;
-   for (int i = 0; i < maxPlayers+1; i++) {
+   threadLock = false;
+   for (int i = 0; i < numOfPlayers; i++) {
       scoreboard[i] = 0;
-      answers[i] = "0";
       roster[i] = 0;
+      answers[i] = "0";
+      results[i] = "";
    }
 }
 
 Server::~Server() {
-   cout << "\n\nGoodbye..." << endl;
+   cout << "Goodbye..." << endl;
 }
 
 // In progress
@@ -20,13 +30,14 @@ void Server::startMenu(void* info) {
    bool exit = false;
    int ans = 0;
 
-   welcomeMessage(player); // send welcome message to player
+   welcomeMessage(player);
    while (!exit) {
-      menuMessage(player); // send menu message to player
+      menuMessage(player);
       recvMsg(player);
       ans = atoi(buffer);
       switch(ans) {
          case 1:
+            displayRules(player);
             displayRules(player);
             break;
          case 2:
@@ -41,54 +52,67 @@ void Server::startMenu(void* info) {
          case 5:
             startGame(player);
             player.setGuest();
+            scoreboard[player.getID()] = 0;
             break;
          case 6:
+            roster[player.getID()] = 0;
             exit = true;
             return;
          default:
             continue;
       }
    }
-   close(player.getSD());  // close player socket descriptor
+   close(player.getSD());  // close players socket descriptor
 }
 
-void Server::startGame(Player player) {
-   waitForPlayers(player); // waits for 2 players to start a game
-
-   int score = scoreboard[player.getID()];   // get players score
-   int enemyScore = scoreboard[getEnemyIndex(player)];   // get players enemy score
+void Server::startGame(Player &player) {
+   waitForPlayers(player); // waits for both players to join the game before 
+   int score = 0;
+   int enemyScore = 0;
+   int round = 1;
 
    while (score < 2 && enemyScore < 2) {
-      waitForAnswers(player);    // waits for both players to submit answers before proceeding 
-      determineWinner(player);   // determine the winner and send message to player
+      stringstream msg;
+      msg << "\nRound " << round++ << endl;  // message for each round
+      sendMsg(player, msg.str());
 
       score = scoreboard[player.getID()];
       enemyScore = scoreboard[getEnemyIndex(player)];
 
-      stringstream msg;
-      msg << "\nYour score: " << score 
-      << "\nEnemy score: " << enemyScore << "\n\n";
+      determineWinner(player);  // determine the winner and the resulting message for each player
 
-      // if either score is 2 then someone won
-      if (score == 2 || enemyScore == 2) {
-         // if its the current player then they won
-         if (score > enemyScore) {
-            msg << "You Won the Match!\n\n";
-            if (!player.isGuest()) {
-               player.setMatch();
-            }
-         }
-         // if not then they lost
-         else {
-            msg << "You Lost the Match!\n\n";
-         }
-         if (!player.isGuest()) {
-            player.setRound(scoreboard[0]);
-         }
-         msg << "Exit";
-      }
-      sendMsg(player, msg.str());   // sned a string message to the current player
+      score = scoreboard[player.getID()];  // gets current players score
+      enemyScore = scoreboard[getEnemyIndex(player)]; // gets the current players enemy score
    }
+}
+
+void Server::welcomeMessage(Player &player) {
+   stringstream msg;
+   msg << "\n---------------- Welcome to Roshambo ----------------\n" << endl;
+   string temp = msg.str();
+   sendMsg(player, temp);
+}
+
+void Server::menuMessage(Player &player) {
+   stringstream msg;
+   msg << "Main Menu:\n" <<
+   "1: View the rules\n" << 
+   "2: View the leaderboard\n" << 
+   "3: Register as a new player\n" <<
+   "4: Log in as an existing player\n" << 
+   "5: Play as a guest\n" <<
+   "6: Exit Game\n" << endl;
+   string temp(msg.str());
+   sendMsg(player, temp);
+}
+
+void Server::displayRules(Player &player) {
+   stringstream msg;
+   msg << "\n~~~ Rules ~~~\n\n" <<
+   "Each player will pick either rock, paper, or scissors." <<
+   "\n - Rock breaks Scissors\n - Scissors cuts Paper\n - Paper covers Rock\n\n" << endl;
+   string temp = msg.str();
+   sendMsg(player, temp);
 }
 
 // In progress
@@ -98,109 +122,134 @@ string Server::displayBoard() {
    return temp;
 }
 
-void Server::waitForPlayers(Player player) {
+void Server::waitForPlayers(Player &player) {
    cout << "Player " << player.getID() << " has joined the game!" << endl;
    roster[player.getID()] = 1;
-   if (player.getID()%2 == 1) {
-      while (roster[player.getID()+1] == 0) {
-         // wait for opponent
-      }
+   while (roster[getEnemyIndex(player)] == 0) {
+      // wait for opponent
    }
 }
 
-void Server::waitForAnswers(Player player) {
+void Server::waitForAnswers(Player &player) {
    recvMsg(player); // wait for players to input answer
    player.setChoice(buffer);
    cout << "Player " << player.getID() << " Choice was: " << player.getChoice() << endl;
    answers[player.getID()] = player.getChoice();
-
-   // if player number is odd
-   if (player.getID()%2 == 1) {
-      while (answers[player.getID()+1].compare("0") == 0) {
-         // wait for opponent
-      }
-   } 
-   // if player number is even
-   else {
-      while (answers[player.getID()-1].compare("0") == 0) {
-         // wait for opponent
-      }
-   } 
-
-   // player disconnects 
+   while (answers[getEnemyIndex(player)].compare("0") == 0) {
+      // wait for opponent
+   }
 }
 
-void Server::determineWinner(Player player) {
-   string msg;
-   msg = "\n\n";
-   string player1 = answers[player.getID()];
-   string player2 = answers[getEnemyIndex(player)];
-
+void Server::determineWinner(Player &player) {
+   stringstream msg;
+   string p1 = answers[player.getID()];
+   string p2 = answers[getEnemyIndex(player)];
+   msg << "\n\n" << "~~~ " << p1 << " vs " << p2 << " ~~~\n\n";
    // player 1 picks rock
-   if (player1.compare("rock") == 0) {
+   if (p1.compare("rock") == 0) {
       // player 2 picks paper
-      if (player2.compare("paper") == 0) {
-         msg += "Paper covers Rock, You Lose!\n";
+      if (p2.compare("paper") == 0) {
+         msg << "You Lost\n\nPaper covers Rock!";
       }
       // player 2 picks scissors
-      else if (player2.compare("scissors") == 0) {
-         msg += "Rock smashes Scissors, You Win!\n";
+      else if (p2.compare("scissors") == 0) {
+         msg << "You Won\n\nRock smashes Scissors!";
          scoreboard[player.getID()]++;
       }
       else {
          // Draw
-         msg += "Draw!";
+         msg << "Draw!";
          player.setDraw();
       }
    }
    // player 1 picks paper
-   else if (player1.compare("paper") == 0) {
+   else if (p1.compare("paper") == 0) {
       // player 2 picks Scissors
-      if (player2.compare("scissors") == 0) {
-         msg += "Scissors cuts Paper, You Lose!\n";
+      if (p2.compare("scissors") == 0) {
+         msg << "You Lost\n\nScissors cuts Paper!";
       }
       // player 2 picks Rock
-      else if (player2.compare("rock") == 0) {
-         msg += "Paper covers Rock, You Win!\n";
+      else if (p2.compare("rock") == 0) {
+         msg << "You Won\n\nPaper covers Rock!";
          scoreboard[player.getID()]++;
       }
       // opponent picks Paper
       else {
          // Draw
-         msg += "Draw!";
+         msg << "Draw!";
          player.setDraw();
       }
    }
    // player 1 picks Scissors
    else {
       // player 2 picks Rock
-      if (player2.compare("rock") == 0) {
-         msg += "Rock smashes Scissors, You Lose!\n";
+      if (p2.compare("rock") == 0) {
+         msg << "You Lost\n\nRock smashes Scissors!";
       }
       // player 2 picks Paper
-      else if (player2.compare("paper") == 0) {
-         msg += "Scissors cuts Paper, You Win!\n";
+      else if (p2.compare("paper") == 0) {
+         msg << "You Won\n\nScissors cuts Paper!";
          scoreboard[player.getID()]++;
       }
       // opponent picks Paper
       else {
          // Draw
-         msg += "Draw!";
+         msg << "Draw!";
          player.setDraw();
       }
    }
+   msg << "\n";
+   results[player.getID()] = msg.str();
+   while (results[getEnemyIndex(player)].compare("") == 0) {
+      // wait for opponent
+      this_thread::sleep_for(chrono::microseconds(100));
+   }
+   this_thread::sleep_for(chrono::microseconds(100));
    answers[player.getID()] = "0";
-   answers[getEnemyIndex(player)] = "0";
-   sendMsg(player, msg);
+
+   int score = scoreboard[player.getID()];  // gets current players score
+   int enemyScore = scoreboard[getEnemyIndex(player)]; // gets the current players enemy score
+
+   msg << "\nYour score: " << score << 
+   "\nEnemy score: " << enemyScore << "\n\n";
+
+   // if either score is 2 then someone won
+   if (score == 2 || enemyScore == 2) {
+      // if its the current player then they won
+      if (score > enemyScore) {
+         msg << "You Won the Match!\n\n";
+         if (!player.isGuest()) {
+            player.setMatch();
+         }
+      }
+      // if not then they lost
+      else {
+         msg << "You Lost the Match!\n\n";
+      }
+      if (!player.isGuest()) {
+         player.setRound(scoreboard[0]);
+      }
+      msg << "Exit";
+   }
+   results[player.getID()] = "";
+   while (results[getEnemyIndex(player)].compare("") != 0) {
+      // wait for opponent
+      this_thread::sleep_for(chrono::microseconds(100));
+   }
+   sendMsg(player, msg.str());
 }
 
-void Server::sendMsg(Player player, string msg) {
+int Server::getEnemyIndex(Player& player) {
+   return player.getID()%2 == 0 ? player.getID()-1 : player.getID()+1;
+}
+
+void Server::sendMsg(Player &player, string msg) {
    memset(&buffer, 0, sizeof(buffer));
    strcpy(buffer, msg.c_str());
    send(player.getSD(), buffer, sizeof(buffer), 0);
 }
 
-void Server::recvMsg(Player player) {
+void Server::recvMsg(Player &player) {
    memset(&buffer, 0, sizeof(buffer));
    recv(player.getSD(), buffer, sizeof(buffer) , 0);
 }

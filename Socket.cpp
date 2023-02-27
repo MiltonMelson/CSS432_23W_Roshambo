@@ -3,7 +3,7 @@
 
 Socket::Socket() {
    PORT = (char*)"8080";
-   maxThreads = 4; 
+   maxThreads = 12; 
    threadCount = 0;
 }
 
@@ -16,7 +16,7 @@ Socket::~Socket() {
 }
 
 void* threadFunc(void *data) {
-   Server game;
+   static Server game;
    game.startMenu(data);
    return data;
 }
@@ -80,7 +80,7 @@ void Socket::createServer() {
    }
 }
 
-void Socket::createClient(const char* destinationAddr) {
+int Socket::createClient(const char* destinationAddr) {
    // setup address socket address info
    memset(&hints, 0, sizeof(hints));   // set block of memory to 0
    hints.ai_family = AF_UNSPEC;        // IPv4 or IPv6
@@ -91,13 +91,13 @@ void Socket::createClient(const char* destinationAddr) {
    int status;
    if ((status = getaddrinfo(destinationAddr, PORT, &hints, &res)) < 0) {
       cerr << "Error: getaddrinfo" << endl;
-      return;
+      return 0;
    }
 
    // create a socket
    if ((clientSD = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
       cerr << "Error: Creating socket" << endl;
-      return;
+      return 0;
    }
 
    // loss the pesky "Address already in use" error message 
@@ -109,9 +109,9 @@ void Socket::createClient(const char* destinationAddr) {
    if (connect(clientSD, res->ai_addr, res->ai_addrlen) < 0) {
       cerr << "Error: Connecting to server" << endl;
       close(clientSD);
-      return;
+      return 0;
    }
-
+   return 1;
 }
 
 int Socket::getClientSD() {
