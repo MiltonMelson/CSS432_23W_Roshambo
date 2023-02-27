@@ -4,17 +4,18 @@
 #include <thread>
 
 
-int roster[3];
-int scoreboard[3];           
-string answers[3]; 
-string results[3];          
+int roster[numOfPlayers];
+int scoreboard[numOfPlayers];           
+string answers[numOfPlayers]; 
+string results[numOfPlayers]; 
+bool threadLock;         
 
 Server::Server() {
-   maxPlayers = 2;         // current player capacity of the game
-   for (int i = 0; i < maxPlayers+1; i++) {
+   threadLock = false;
+   for (int i = 0; i < numOfPlayers; i++) {
       scoreboard[i] = 0;
-      answers[i] = "0";
       roster[i] = 0;
+      answers[i] = "0";
       results[i] = "";
    }
 }

@@ -5,12 +5,11 @@
 #include "Data.h"
 #include "Socket.h"
 
-extern int roster[3];
-extern int scoreboard[3];           
-extern string answers[3];
-extern mutex mtx;
-extern bool ready;
-extern condition_variable cv;           
+const int numOfPlayers = 13;           // max number of threads/players (adjusted +1 for indexing purposes)         
+extern int roster[numOfPlayers];       // the current roster of who is online
+extern int scoreboard[numOfPlayers];   // the temp scoreboard of each match           
+extern string answers[numOfPlayers];   // stores the clients answers from each thread 
+extern bool threadLock;
 
 class Server {
    public:
@@ -28,7 +27,6 @@ class Server {
       string displayBoard();
 
    private:
-      int maxPlayers;
       char buffer[8000];
 
       void sendMsg(Player &player, string msg);
