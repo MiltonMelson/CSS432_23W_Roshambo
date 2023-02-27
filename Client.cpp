@@ -30,12 +30,18 @@ string Client::menuChoice() {
 }
 
 void Client::playGame() {
+   recvMsg(sd); // clears buffer and receives welcome message
+   cout << buffer; // output message
+
    string option = "0";
    while (option.compare("6") != 0) {
-      recvMsg(sd); // clears buffer and receives welcome message
-      cout << buffer; // output message
+      recvMsg(sd);   // recieve menu message
+      cout << buffer;
       option = menuChoice();
-      if (option.compare("1") == 0) {}
+      if (option.compare("1") == 0) {
+         recvMsg(sd);   // recieve rules message
+         cout << buffer;   
+      }
       if (option.compare("2") == 0) {}
       if (option.compare("3") == 0) {}
       if (option.compare("4") == 0) {}
@@ -59,11 +65,19 @@ void Client::bestOutOfThree() {
       // player waits for result from server
       recvMsg(sd); 
       string result(buffer);
+      cout << result;
+
+      // clear string and recieve current score
+      result.clear();
+      recvMsg(sd);
+      result.assign(buffer);
+
+      // if message contains Exit then game is over
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
          return;
       }
-      cout << result;
+      cout << buffer;
    }
 }
 
@@ -81,7 +95,6 @@ void Client::makeChoice() {
 // converts string input from userChoice to verify correct input
 int Client::convertAnswer(string &input) {
    convertToLower(input);
-   cout << input << endl;
    if (input.compare("rock") == 0) {
       return 0;
    }

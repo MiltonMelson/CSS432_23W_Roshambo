@@ -18,7 +18,7 @@ class Socket {
       Socket();  
       ~Socket();
       void createServer();
-      void createClient(const char* destinationAddr);
+      int createClient(const char* destinationAddr);
       int getClientSD();
 
    private:
