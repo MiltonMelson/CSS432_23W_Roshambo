@@ -56,7 +56,8 @@ void Client::bestOutOfThree() {
    int round = 1;
    while (true) {
       // message for each round
-      cout << "Round: " << round++ << endl;
+      recvMsg(sd);
+      cout << buffer;
 
       // player makes choice and send to server
       makeChoice();
@@ -65,19 +66,18 @@ void Client::bestOutOfThree() {
       // player waits for result from server
       recvMsg(sd); 
       string result(buffer);
-      cout << result;
-
-      // clear string and recieve current score
-      result.clear();
-      recvMsg(sd);
-      result.assign(buffer);
-
+      
       // if message contains Exit then game is over
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
-         return;
+         break;
       }
-      cout << buffer;
+      cout << result;
+   }
+   char endGame[11] = {'G', 'a', 'm', 'e', ' ', 'o', 'v', 'e', 'r', '\n'};
+   for (int i = 0; i < 11; i++) {
+      cout << endGame[i] << endl;
+      sleep(1);
    }
 }
 

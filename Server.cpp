@@ -50,8 +50,10 @@ void Server::startMenu(void* info) {
          case 5:
             startGame(player);
             player.setGuest();
+            scoreboard[player.getID()] = 0;
             break;
          case 6:
+            roster[player.getID()] = 0;
             exit = true;
             return;
          default:
@@ -65,11 +67,18 @@ void Server::startGame(Player &player) {
    waitForPlayers(player); // waits for both players to join the game before 
    int score = 0;
    int enemyScore = 0;
+   int round = 1;
 
    // best 2 out of 3
    while (score < 2 && enemyScore < 2) {
+      stringstream msg;
+      msg << "\nRound " << round++ << endl;  // message for each round
+      sendMsg(player, msg.str());
+
       waitForAnswers(player); // waits for both players to submit answers before proceeding 
+
       determineWinner(player);  // determine the winner and the resulting message for each player
+
       score = scoreboard[player.getID()];  // gets current players score
       enemyScore = scoreboard[getEnemyIndex(player)]; // gets the current players enemy score
    }
@@ -133,16 +142,16 @@ void Server::determineWinner(Player &player) {
    stringstream msg;
    string p1 = answers[player.getID()];
    string p2 = answers[getEnemyIndex(player)];
-
+   msg << "\n\n" << "~~~ " << p1 << " vs " << p2 << " ~~~\n\n";
    // player 1 picks rock
    if (p1.compare("rock") == 0) {
       // player 2 picks paper
       if (p2.compare("paper") == 0) {
-         msg << "Paper covers Rock, You Lost!";
+         msg << "You Lost\n\nPaper covers Rock!";
       }
       // player 2 picks scissors
       else if (p2.compare("scissors") == 0) {
-         msg << "Rock smashes Scissors, You Won!";
+         msg << "You Won\n\nRock smashes Scissors!";
          scoreboard[player.getID()]++;
       }
       // opponent picks rock
@@ -156,11 +165,11 @@ void Server::determineWinner(Player &player) {
    else if (p1.compare("paper") == 0) {
       // player 2 picks Scissors
       if (p2.compare("scissors") == 0) {
-         msg << "Scissors cuts Paper, You Lost!";
+         msg << "You Lost\n\nScissors cuts Paper!";
       }
       // player 2 picks Rock
       else if (p2.compare("rock") == 0) {
-         msg << "Paper covers Rock, You Won!";
+         msg << "You Won\n\nPaper covers Rock!";
          scoreboard[player.getID()]++;
       }
       // opponent picks Paper
@@ -174,11 +183,11 @@ void Server::determineWinner(Player &player) {
    else {
       // player 2 picks Rock
       if (p2.compare("rock") == 0) {
-         msg << "Rock smashes Scissors, You Lost!";
+         msg << "You Lost\n\nRock smashes Scissors!";
       }
       // player 2 picks Paper
       else if (p2.compare("paper") == 0) {
-         msg << "Scissors cuts Paper, You Won!";
+         msg << "You Won\n\nScissors cuts Paper!";
          scoreboard[player.getID()]++;
       }
       // opponent picks Paper
@@ -188,22 +197,20 @@ void Server::determineWinner(Player &player) {
          player.setDraw();
       }
    }
-   msg << "\n" << endl;
+   msg << "\n";
    results[player.getID()] = msg.str();
-   msg.clear();
    while (results[getEnemyIndex(player)].compare("") == 0) {
       // wait for opponent
       this_thread::sleep_for(chrono::microseconds(100));
    }
    this_thread::sleep_for(chrono::microseconds(100));
-   sendMsg(player, results[player.getID()]);
    answers[player.getID()] = "0";
 
    int score = scoreboard[player.getID()];  // gets current players score
    int enemyScore = scoreboard[getEnemyIndex(player)]; // gets the current players enemy score
 
    msg << "\nYour score: " << score << 
-   "\nEnemy score: " << enemyScore << "\n";
+   "\nEnemy score: " << enemyScore << "\n\n";
 
    // if either score is 2 then someone won
    if (score == 2 || enemyScore == 2) {
@@ -223,13 +230,12 @@ void Server::determineWinner(Player &player) {
       }
       msg << "Exit";
    }
-   msg << endl;
-   sendMsg(player, msg.str());
    results[player.getID()] = "";
    while (results[getEnemyIndex(player)].compare("") != 0) {
       // wait for opponent
       this_thread::sleep_for(chrono::microseconds(100));
    }
+   sendMsg(player, msg.str());
 }
 
 int Server::getEnemyIndex(Player& player) {
