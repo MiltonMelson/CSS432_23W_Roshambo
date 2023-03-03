@@ -1,3 +1,8 @@
+// CSS432 Winter 2023
+// Professor: Yang Peng
+// Students: Milton Melson, Oliver Fernandez
+// Project Name: Roshambo
+
 #include "Server.h"
 #include <chrono>
 #include <sstream>
@@ -80,9 +85,12 @@ void Server::startGame(Player &player) {
    }
 
    // remove player 
-   scoreboard[player.getID()] = 0;
    roster[player.getID()] = 0;
    cout << "Player " << player.getID() << " has left the game!" << endl;
+   while (roster[getEnemyIndex(player)] != 0) {
+      // wait for opponent to exit before reseting scoreboard 
+   }
+   scoreboard[player.getID()] = 0;
    player.setID(0);
 }
 
@@ -127,7 +135,7 @@ void Server::assignPlayerID(Player &player) {
       int timer = 0;
       while (roster[getEnemyIndex(player)] == 0) {
          // wait for opponent
-         this_thread::sleep_for(chrono::microseconds(2000000));
+         this_thread::sleep_for(chrono::microseconds(1000000));
          ++timer;
          if (timer >= 15) {
             roster[player.getID()] = 0;
@@ -135,7 +143,10 @@ void Server::assignPlayerID(Player &player) {
             break;
          }
       }
-      if (player.getID() != 0) {
+      if (player.getID() == 0) {
+         continue;
+      }
+      else {
          return;
       }
    }
@@ -228,8 +239,6 @@ void Server::determineWinner(Player &player) {
       }
       msg << "Exit";
    }
-
-   this_thread::sleep_for(chrono::microseconds(100));
    sendMsg(player, msg.str());
    answers[player.getID()] = "0";
 }
@@ -239,10 +248,10 @@ int Server::getEnemyIndex(Player& player) {
 }
 
 void Server::sendMsg(Player &player, string msg) {
-   this_thread::sleep_for(chrono::microseconds(player.getID()*100));
+   this_thread::sleep_for(chrono::microseconds(player.getID()*100000));
    while (threadLock) {
    // wait
-      this_thread::sleep_for(chrono::microseconds(player.getID()*100));
+      this_thread::sleep_for(chrono::microseconds(player.getID()*100000));
    }
    threadLock = true;
    memset(&buffer, 0, sizeof(buffer));

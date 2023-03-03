@@ -1,3 +1,8 @@
+// CSS432 Winter 2023
+// Professor: Yang Peng
+// Students: Milton Melson, Oliver Fernandez
+// Project Name: Roshambo
+
 #include "Data.h"
 #include <fstream>
 #include <queue>

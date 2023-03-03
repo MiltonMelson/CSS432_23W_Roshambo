@@ -1,3 +1,8 @@
+// CSS432 Winter 2023
+// Professor: Yang Peng
+// Students: Milton Melson, Oliver Fernandez
+// Project Name: Roshambo
+
 #ifndef SOCKET_H
 #define SOCKET_H
 

@@ -1,3 +1,8 @@
+// CSS432 Winter 2023
+// Professor: Yang Peng
+// Students: Milton Melson, Oliver Fernandez
+// Project Name: Roshambo
+
 #ifndef PLAYER_H
 #define PLAYER_H
 
