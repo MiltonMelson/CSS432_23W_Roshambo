@@ -9,14 +9,18 @@
 int main(int argc, char *argv[]) {
    // server
    if (argc == 1) {
-      Socket server;
-      server.createServer();
+      Socket server;    // initialize socket
+      server.createServer();  // create the server 
    }
    // client
    else if (argc == 2) {
-      Socket socket;
-      if (socket.createClient(argv[1])) {
-         Client player(socket.getClientSD());
+      Socket socket;    // initialize socket
+
+      // trys to create the client socket and connects to server
+      if (socket.createClient(argv[1])) { 
+
+         // if connected create the client and pass in the socket descriptor
+         Client player(socket.getClientSD());   
       }
    }
    return 0;
