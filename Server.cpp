@@ -6,14 +6,10 @@
 int scoreboard[numOfPlayers];           
 string answers[numOfPlayers]; 
 string results[numOfPlayers]; 
-int matchReady[numOfPlayers/2];
 bool threadLock;         
 
 Server::Server() {
    threadLock = false;
-   for (int i = 0; i < numOfPlayers/2; i++) {
-      matchReady[i] = 0;
-   }
    for (int i = 0; i < numOfPlayers; i++) {
       scoreboard[i] = 0;
       answers[i] = "0";

@@ -5,10 +5,9 @@
 #include "Data.h"
 #include "Socket.h"
 
-const int numOfPlayers = 7;            // max number of threads/players (adjusted +1 for indexing purposes)         
+const int numOfPlayers = 101;            // max number of threads/players (adjusted +1 for indexing purposes)         
 extern int scoreboard[numOfPlayers];   // the temp scoreboard of each match           
 extern string answers[numOfPlayers];   // stores the players answers from each thread 
-extern int matchReady[numOfPlayers/2]; // keeps track of which group of players are ready for a match
 extern bool threadLock;                 // used to lock all but two threads while determining winners
 
 class Server {
