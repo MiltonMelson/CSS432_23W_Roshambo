@@ -24,7 +24,6 @@ string Client::menuChoice() {
       ans = "0";
       cout << "Invalid option.\n";
    }
-
    sendMsg(ans);
    return ans;
 }
@@ -53,7 +52,6 @@ void Client::playGame() {
 
 void Client::bestOutOfThree() {
    // best 2 out of 3 
-   int round = 1;
    while (true) {
       // message for each round
       recvMsg(sd);

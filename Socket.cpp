@@ -3,7 +3,7 @@
 
 Socket::Socket() {
    PORT = (char*)"8080";
-   maxThreads = 12; 
+   maxThreads = 6; 
    threadCount = 0;
 }
 

@@ -23,6 +23,9 @@ class Player {
       void setDraw();
       void setGuest();
       bool isGuest();
+      bool isReady();
+      void notReady();
+      void makeReady();
    
    private:
       int socketDescriptor;
@@ -33,6 +36,7 @@ class Player {
       int match;
       int draw;
       bool guest;
+      bool ready;
 };
 
 #endif

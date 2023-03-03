@@ -5,11 +5,11 @@
 #include "Data.h"
 #include "Socket.h"
 
-const int numOfPlayers = 13;           // max number of threads/players (adjusted +1 for indexing purposes)         
-extern int roster[numOfPlayers];       // the current roster of who is online
+const int numOfPlayers = 7;           // max number of threads/players (adjusted +1 for indexing purposes)         
 extern int scoreboard[numOfPlayers];   // the temp scoreboard of each match           
 extern string answers[numOfPlayers];   // stores the clients answers from each thread 
-extern bool threadLock;
+extern int matchReady[numOfPlayers/2];
+extern int threadLock;
 
 class Server {
    public:
@@ -23,6 +23,9 @@ class Server {
       void waitForPlayers(Player &player);
       void waitForAnswers(Player &player);
       void determineWinner(Player &player);
+      void prepareMatch(Player &player);
+      void leaveMatch(Player &player);
+      void makePlayerReady(Player &player, int group);
       int getEnemyIndex(Player &player);
       string displayBoard();
 
