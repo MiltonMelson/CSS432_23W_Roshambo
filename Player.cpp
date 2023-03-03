@@ -2,10 +2,10 @@
 
 Player::Player() {}
 
-Player::Player(int sd, int num) {
+Player::Player(int sd) {
    socketDescriptor = sd;
-   playerNumber = num;
    guest = false;
+   ready = false;
 }
 
 Player::~Player() {}
@@ -72,4 +72,16 @@ void Player::setGuest() {
 
 bool Player::isGuest() {
    return guest;
+}
+
+bool Player::isReady() {
+   return ready;
+}
+
+void Player::makeReady() {
+   ready = true;
+}
+
+void Player::notReady() {
+   ready = false;
 }
