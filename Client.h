@@ -15,15 +15,15 @@ class Client {
       Client();
       Client(int socket);
       ~Client();
-      int menuChoice();
-      void playGame();
-      string makeChoice();
-      void bestOutOfThree();
       
    private:
       int sd;              // the clients socket descriptor
       char buffer[8000];   // the message buffer 
 
+      int menuChoice();
+      void playGame();
+      string makeChoice();
+      void bestOutOfThree();
       int convertAnswer(string &input);   // verifies input and converts from string to int
       void convertToLower(string &input); // converts a string to lowercase
       void sendMsg(string msg);           // sends a message through the socket descriptor

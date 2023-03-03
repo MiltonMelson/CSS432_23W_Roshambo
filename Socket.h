@@ -30,8 +30,7 @@ class Socket {
       const char* PORT;                // port number to listen on
       struct addrinfo hints, *res;     // containers to store address info
       int serverSD, clientSD;          // Socket Descriptor
-      int maxThreads;                  // Max players (threads)
-      int threadCount;                 // thread counter
+      int maxThreads;                  // Maximum threads
 };
 
 #endif

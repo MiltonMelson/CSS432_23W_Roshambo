@@ -33,10 +33,10 @@ class Player {
       void makeReady();
    
    private:
-      int socketDescriptor;
-      int playerNumber;
-      char* playerName;
-      char* choice;
+      int socketDescriptor;   // Socket descriptor so the server can send messages to each player
+      int playerNumber;       // Assigned temporarily based on number of players in active match (used for indexing)
+      char* playerName;       
+      char* choice;           
       int round;
       int match;
       int draw;

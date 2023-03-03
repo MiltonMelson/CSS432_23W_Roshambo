@@ -5,17 +5,21 @@
 
 #include "Client.h"
 
+
+// default constructor
 Client::Client() {
    // default constructor
 }
 
 
+// contructor that recieves a socket
 Client::Client(int socket) {
    sd = socket;   // set socket descriptor
    playGame();    // start the game for the client
 }
 
 
+// destructor
 Client::~Client() {
    cout << "\n\nGoodbye..." << endl;
 }

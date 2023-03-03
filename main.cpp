@@ -6,6 +6,14 @@
 #include "Client.h"
 #include "Server.h"
 
+
+
+/**
+ * @brief This is the driver function for the game.
+ * The server and client will be determined based on arguments provided
+ * @param argc If is it 1 then the server will be created. If it is 2 then 
+ * the client will be created with provided destination IP/hostname.
+*/
 int main(int argc, char *argv[]) {
    // server
    if (argc == 1) {

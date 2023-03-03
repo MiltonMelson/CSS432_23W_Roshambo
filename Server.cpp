@@ -8,92 +8,115 @@
 #include <sstream>
 #include <thread>
 
-int scoreboard[numOfPlayers];           
-string answers[numOfPlayers]; 
-string results[numOfPlayers]; 
-int roster[numOfPlayers];
-bool threadLock;         
+int scoreboard[numOfPlayers];       // temp scoreboard of each match        
+string answers[numOfPlayers];       // storage for each players provided answers
+int roster[numOfPlayers];           // roster of currently active players in match
+bool threadLock;                    // used to lock sendMsg function to prevent multiple threads sending at the same time   
 
+
+
+/**
+ * @brief constructor to initialize all variables 
+*/
 Server::Server() {
    threadLock = false;
    for (int i = 0; i < numOfPlayers; i++) {
       scoreboard[i] = 0;
       answers[i] = "0";
-      results[i] = "";
       roster[i] = 0;
    }
 }
 
+
+// destructor
 Server::~Server() {
    cout << "Goodbye..." << endl;
 }
 
-// In progress
-void Server::startMenu(void* info) {
-   Player player = *(Player*)info;  // store info into player
-   bool exit = false;
-   int ans = 0;
 
-   welcomeMessage(player);
+/**
+ * @brief This is the entry point for each player
+ * They will each be welcome and menu messages, and then waits for their menu selection.
+ * @param info the thread info for each player provided from the thread function in socket.cpp
+*/
+void Server::startMenu(void* info) {
+   Player player = *(Player*)info;  // store info into player object
+   bool exit = false;               // if player want to exit the game
+   int ans = 0;                     // players selection
+
+   welcomeMessage(player);          // sends the welcome message to the player
+
    while (!exit) {
-      menuMessage(player);
-      recvMsg(player);
-      ans = atoi(buffer);
+      menuMessage(player);          // send the menu message to the player
+      recvMsg(player);              // recieves each players menu selection into the buffer
+      ans = atoi(buffer);           // converts buffer to int
       switch(ans) {
-         case 1:
+         case 1:                    // displays the rules to the player   
             displayRules(player);
             break;
-         case 2:
+         case 2:                    // displays the overall scoreboard
             sendMsg(player, displayBoard());
             break;
-         case 3:
+         case 3:                    // registers the player
             //Register User
             break;
-         case 4:
+         case 4:                    // allows player to sign in
             // Sign in as User
             break;
-         case 5:
+         case 5:                    // starts the game
             startGame(player);
             player.setGuest();
             break;
-         case 6:
+         case 6:                    // exits the game
             exit = true;
             return;
          default:
             continue;
       }
    }
-   close(player.getSD());  // close players socket descriptor
+   close(player.getSD());  // closes players socket descriptor
 }
 
+
+/**
+ * @brief Starts the game for the provided player object
+ * @param player A reference to the player created in startMenu function
+*/
 void Server::startGame(Player &player) {
-   assignPlayerID(player);
+   assignPlayerID(player);    // assigns the current player a temp number for the match
+
    cout << "Player " << player.getID() << " has joined the game!" << endl;
 
-   int score = 0;
-   int enemyScore = 0;
-   int round = 1;
+   int score = 0;             // the current players score
+   int enemyScore = 0;        // the enemies score
+   int round = 1;             // the current round
+
    // best 2 out of 3
    while (score < 2 && enemyScore < 2) {
       stringstream msg;
       msg << "\nRound " << round++ << endl;  // message for each round
-      sendMsg(player, msg.str());
-      waitForAnswers(player); // waits for both players to submit answers before proceeding 
-      determineWinner(player);  // determine the winner and the resulting message for each player
-      score = scoreboard[player.getID()];  // gets current players score
-      enemyScore = scoreboard[getEnemyIndex(player)]; // gets the current players enemy score
+      sendMsg(player, msg.str());            // send the message to the player
+      waitForAnswers(player);                // waits answers from player and enemy 
+      determineWinner(player);               // determines the winner for current round
+      score = scoreboard[player.getID()];    // gets score
+      enemyScore = scoreboard[getEnemyIndex(player)]; // gets the enemy score
    }
 
-   // remove player 
+   // removes the player from the roster and scoreboard
    roster[player.getID()] = 0;
    cout << "Player " << player.getID() << " has left the game!" << endl;
    while (roster[getEnemyIndex(player)] != 0) {
       // wait for opponent to exit before reseting scoreboard 
    }
    scoreboard[player.getID()] = 0;
-   player.setID(0);
+   player.setID(0);     // set players id to 0 for inactive
 }
 
+
+/**
+ * @brief Creates and sends the welcome message to the player
+ * @param player A reference to the player passed from startMenu function
+*/
 void Server::welcomeMessage(Player &player) {
    stringstream msg;
    msg << "\n---------------- Welcome to Roshambo ----------------\n" << endl;
@@ -101,6 +124,11 @@ void Server::welcomeMessage(Player &player) {
    sendMsg(player, temp);
 }
 
+
+/**
+ * @brief Creates and sends the menu message to the player
+ * @param player A reference to the player passed from startMenu function
+*/
 void Server::menuMessage(Player &player) {
    stringstream msg;
    msg << "Main Menu:\n" <<
@@ -114,6 +142,11 @@ void Server::menuMessage(Player &player) {
    sendMsg(player, temp);
 }
 
+
+/**
+ * @brief Creats and sends the message for the rules of the game to the player
+ * @param player A reference to the player passed from startMenu function
+*/
 void Server::displayRules(Player &player) {
    stringstream msg;
    msg << "\n~~~ Rules ~~~\n\n" <<
@@ -123,8 +156,19 @@ void Server::displayRules(Player &player) {
    sendMsg(player, temp);
 }
 
+
+/**
+ * @brief Assigns the player an ID for indexing in global variables.
+ * The player will be assigned the index based on available slots in roster.
+ * If a player is assigned to a slot and it does not get an enemy in 15 secs it
+ * will reset their ID and remove them from the roster and search for a new ID in roster.
+ * If the enemy shows up before 15 secs it will break and both players will start the match
+ * @param player A reference to the player passed from the startGame function
+*/
 void Server::assignPlayerID(Player &player) {
    while (true) {
+
+      // search roster for open slot
       for (int i = 1; i < numOfPlayers; i++) {
          if (roster[i] == 0) {
             roster[i] = 1;
@@ -132,6 +176,8 @@ void Server::assignPlayerID(Player &player) {
             break;
          }
       }
+
+      // start timer for thread to possibly reset and search again
       int timer = 0;
       while (roster[getEnemyIndex(player)] == 0) {
          // wait for opponent
@@ -143,14 +189,18 @@ void Server::assignPlayerID(Player &player) {
             break;
          }
       }
+
+      // if player ID is 0 then no opponent found restart search
       if (player.getID() == 0) {
          continue;
       }
+      // else opponent found leave function
       else {
          return;
       }
    }
 }
+
 
 // In progress
 string Server::displayBoard() {
@@ -159,21 +209,35 @@ string Server::displayBoard() {
    return temp;
 }
 
+
+/**
+ * @brief Recieves the answers from each player and makes them wait for their
+ * opponent to also answer before proceeding to determine the winners.
+ * @param player A reference to player passed from the startGame function
+*/
 void Server::waitForAnswers(Player &player) {
-   recvMsg(player); // wait for players to input answer
-   player.setChoice(buffer);
+   recvMsg(player);           // wait for players to input answer
+   player.setChoice(buffer);  // sets players choice
    cout << "Player " << player.getID() << " Choice was: " << player.getChoice() << endl;
    answers[player.getID()] = player.getChoice();
    while (answers[getEnemyIndex(player)].compare("0") == 0) {
-      // wait for opponent
+      // wait for opponent to answer
    }
 }
 
+
+/**
+ * @brief Determines the winner between current players in match based on rps logic.
+ * Then sends the corresponding win/lose message to each player. If there is a winner
+ * both players will recieve the terminating message and client.cpp will end bestOutOfThree loop.
+ * @param player A reference to player passed from the startGame function
+*/
 void Server::determineWinner(Player &player) {
-   string p1 = answers[player.getID()];
-   string p2 = answers[getEnemyIndex(player)];
+   string p1 = answers[player.getID()];         // the current players answer
+   string p2 = answers[getEnemyIndex(player)];  // the current players enemy answer
    
-   stringstream msg;
+   stringstream msg;                            // the message to be sent after determining the winner
+
    msg << "\n\n" << "~~~ " << p1 << " vs " << p2 << " ~~~\n\n";
 
    if (p1.compare("rock") == 0) {               // player 1 picks rock
@@ -182,7 +246,7 @@ void Server::determineWinner(Player &player) {
       }
       else if (p2.compare("scissors") == 0) {   // player 2 picks scissors
          msg << "You Won\n\nRock smashes Scissors!";
-         scoreboard[player.getID()]++;
+         scoreboard[player.getID()]++;          // player 1 won so increase scoreboard
       }
       else {                                    // player 2 picks rock
          msg << "Draw!";                        // Draw
@@ -195,7 +259,7 @@ void Server::determineWinner(Player &player) {
       }
       else if (p2.compare("rock") == 0) {       // player 2 picks Rock
          msg << "You Won\n\nPaper covers Rock!";
-         scoreboard[player.getID()]++;
+         scoreboard[player.getID()]++;           // player 1 won so increase scoreboard
       }
       else {                                    // player 2 picks Paper
          msg << "Draw!";                        // Draw
@@ -208,58 +272,91 @@ void Server::determineWinner(Player &player) {
       }
       else if (p2.compare("paper") == 0) {      // player 2 picks Paper
          msg << "You Won\n\nScissors cuts Paper!";
-         scoreboard[player.getID()]++;
+         scoreboard[player.getID()]++;           // player 1 won so increase scoreboard
       }
       else {                                    // opponent picks Paper
          msg << "Draw!";                        // Draw
          player.setDraw();
       }
    }
+
+   // sleep thread 1 or 2 doesnt matter
+   // this will allow them both to catch up prior to determining the score
    this_thread::sleep_for(chrono::microseconds(100));
+
    int score = scoreboard[player.getID()];  // gets current players score
    int enemyScore = scoreboard[getEnemyIndex(player)]; // gets the current players enemy score
+
    msg << "\n\nYour score: " << score << 
    "\nEnemy score: " << enemyScore << "\n\n";
 
-   // best 2 out of 3 for either score
+   // if either has a score of 2 then they won
    if (score == 2 || enemyScore == 2) {
-      // if its the current players score is higher
-      if (score > enemyScore) {
+      if (score == 2) {             // if its the current player
          msg << "You Won the Match!\n\n";
          if (!player.isGuest()) {
             player.setMatch();
          }
       }
-      // if not then they lost
-      else {
+      else {                        // if its the enemy
          msg << "You Lost the Match!\n\n";
       }
       if (!player.isGuest()) {
          player.setRound(scoreboard[0]);
       }
-      msg << "Exit";
+      msg << "Exit";                // terminating message for client.cpp
    }
-   sendMsg(player, msg.str());
-   answers[player.getID()] = "0";
+   sendMsg(player, msg.str());      // sends the enitre message
+   answers[player.getID()] = "0";   // reset answers for each player
 }
 
+
+/**
+ * @brief Gets the current players enemy index.
+ * @param player A reference to the current player
+ * @return returns the index of the current players enemy index
+*/
 int Server::getEnemyIndex(Player& player) {
+   // if the current player ID is 1 then its enemy is 2
+   // if the current player ID is 2 then its enemy is 1
+   // this applies to 3 and 4, and so on
    return player.getID()%2 == 0 ? player.getID()-1 : player.getID()+1;
 }
 
+
+/**
+ * @brief Sends a message to the player object
+ * @param player the player the message is getting sent to
+ * @param msg the message that is being sent
+*/
 void Server::sendMsg(Player &player, string msg) {
-   this_thread::sleep_for(chrono::microseconds(player.getID()*100000));
+   // sleeps a thread based on their current player ID in hopes of offsetting their entry time
+   // this should allow enough time for 1 thread to get the threadLock before the other skips the while loop
+   this_thread::sleep_for(chrono::microseconds(player.getID()*1000));
+
+   // This will lock all threads while one thread is sending a message
    while (threadLock) {
-   // wait
-      this_thread::sleep_for(chrono::microseconds(player.getID()*100000));
+      // each thread will wait for different times so they dont all get released at once and hog the threadLock
+      this_thread::sleep_for(chrono::microseconds(player.getID()*1000));
    }
+
+   // sets the threadLock so other threads will wait
    threadLock = true;
+
+   // sends the actual message
    memset(&buffer, 0, sizeof(buffer));
    strcpy(buffer, msg.c_str());
    send(player.getSD(), buffer, sizeof(buffer), 0);
+
+   // resets the threadLock, notifying other threads
    threadLock = false;
 }
 
+
+/**
+ * @brief Recieves a message from the players socket descriptor
+ * @param player The player the message will be recieved from
+*/
 void Server::recvMsg(Player &player) {
    memset(&buffer, 0, sizeof(buffer));
    recv(player.getSD(), buffer, sizeof(buffer) , 0);
