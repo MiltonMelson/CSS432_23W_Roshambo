@@ -6,6 +6,7 @@
 int scoreboard[numOfPlayers];           
 string answers[numOfPlayers]; 
 string results[numOfPlayers]; 
+int roster[numOfPlayers];
 bool threadLock;         
 
 Server::Server() {
@@ -14,6 +15,7 @@ Server::Server() {
       scoreboard[i] = 0;
       answers[i] = "0";
       results[i] = "";
+      roster[i] = 0;
    }
 }
 
@@ -48,7 +50,6 @@ void Server::startMenu(void* info) {
          case 5:
             startGame(player);
             player.setGuest();
-            scoreboard[player.getID()] = 0;
             break;
          case 6:
             exit = true;
@@ -61,7 +62,9 @@ void Server::startMenu(void* info) {
 }
 
 void Server::startGame(Player &player) {
+   assignPlayerID(player);
    cout << "Player " << player.getID() << " has joined the game!" << endl;
+
    int score = 0;
    int enemyScore = 0;
    int round = 1;
@@ -75,6 +78,12 @@ void Server::startGame(Player &player) {
       score = scoreboard[player.getID()];  // gets current players score
       enemyScore = scoreboard[getEnemyIndex(player)]; // gets the current players enemy score
    }
+
+   // remove player 
+   scoreboard[player.getID()] = 0;
+   roster[player.getID()] = 0;
+   cout << "Player " << player.getID() << " has left the game!" << endl;
+   player.setID(0);
 }
 
 void Server::welcomeMessage(Player &player) {
@@ -104,6 +113,32 @@ void Server::displayRules(Player &player) {
    "\n - Rock breaks Scissors\n - Scissors cuts Paper\n - Paper covers Rock\n\n" << endl;
    string temp = msg.str();
    sendMsg(player, temp);
+}
+
+void Server::assignPlayerID(Player &player) {
+   while (true) {
+      for (int i = 1; i < numOfPlayers; i++) {
+         if (roster[i] == 0) {
+            roster[i] = 1;
+            player.setID(i);
+            break;
+         }
+      }
+      int timer = 0;
+      while (roster[getEnemyIndex(player)] == 0) {
+         // wait for opponent
+         this_thread::sleep_for(chrono::microseconds(2000000));
+         ++timer;
+         if (timer >= 15) {
+            roster[player.getID()] = 0;
+            player.setID(0);
+            break;
+         }
+      }
+      if (player.getID() != 0) {
+         return;
+      }
+   }
 }
 
 // In progress

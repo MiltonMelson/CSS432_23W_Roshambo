@@ -8,6 +8,7 @@
 const int numOfPlayers = 101;            // max number of threads/players (adjusted +1 for indexing purposes)         
 extern int scoreboard[numOfPlayers];   // the temp scoreboard of each match           
 extern string answers[numOfPlayers];   // stores the players answers from each thread 
+extern int roster[numOfPlayers];
 extern bool threadLock;                 // used to lock all but two threads while determining winners
 
 class Server {
@@ -21,6 +22,7 @@ class Server {
       void displayRules(Player &player);
       void waitForAnswers(Player &player);
       void determineWinner(Player &player);
+      void assignPlayerID(Player &player);
       int getEnemyIndex(Player &player);
       string displayBoard();
 

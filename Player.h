@@ -5,7 +5,7 @@
 class Player {
    public:
       Player();
-      Player(int sd, int num);
+      Player(int sd);
       ~Player();
       int getSD();
       void setSD(int sd);

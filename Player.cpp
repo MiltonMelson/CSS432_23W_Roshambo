@@ -2,9 +2,8 @@
 
 Player::Player() {}
 
-Player::Player(int sd, int num) {
+Player::Player(int sd) {
    socketDescriptor = sd;
-   playerNumber = num;
    guest = false;
    ready = false;
 }

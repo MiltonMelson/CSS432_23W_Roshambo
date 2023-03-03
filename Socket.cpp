@@ -69,7 +69,7 @@ void Socket::createServer() {
          return;
       }
       // create a new posix thread for each accepted player
-      Player data(newSd, threadCount+1);
+      Player data(newSd);
       int iret1 = pthread_create(&tid[threadCount], NULL, threadFunc, (void*)&data);
       threadCount++;
    }
