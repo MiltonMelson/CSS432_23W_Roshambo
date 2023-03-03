@@ -97,14 +97,12 @@ void Client::bestOutOfThree() {
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
          break;
-         break;
       }
       cout << result;
    }
    char endGame[11] = {'G', 'a', 'm', 'e', ' ', 'o', 'v', 'e', 'r', '\n'};
    for (int i = 0; i < 11; i++) {
       cout << endGame[i] << endl;
-      sleep(1);
    }
 }
 

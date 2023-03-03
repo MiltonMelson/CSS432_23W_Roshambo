@@ -35,8 +35,8 @@ Server::~Server() {
 
 
 /**
- * @brief This is the entry point for each player
- * They will each be welcome and menu messages, and then waits for their menu selection.
+ * @brief This is the entry point for each player.
+ * The server will send a welcome and menu messages, and then wait the players menu selection.
  * @param info the thread info for each player provided from the thread function in socket.cpp
 */
 void Server::startMenu(void* info) {
