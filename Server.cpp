@@ -11,9 +11,7 @@
 int scoreboard[numOfPlayers];       // temp scoreboard of each match        
 string answers[numOfPlayers];       // storage for each players provided answers
 int roster[numOfPlayers];           // roster of currently active players in match
-bool threadLock;                    // used to lock sendMsg function to prevent multiple threads sending at the same time   
-
-
+bool threadLock;                    // used to lock sendMsg function to prevent multiple threads sending at the same time 
 
 /**
  * @brief constructor to initialize all variables 
@@ -238,7 +236,7 @@ void Server::determineWinner(Player &player) {
    
    stringstream msg;                            // the message to be sent after determining the winner
 
-   msg << "\n\n" << "~~~ " << p1 << " vs " << p2 << " ~~~\n\n";
+   msg << "\n\n" << drawChoice(p1) << "\n\n    vs    \n\n" << drawChoice(p2) << "\n\n";
 
    if (p1.compare("rock") == 0) {               // player 1 picks rock
       if (p2.compare("paper") == 0) {           // player 2 picks paper
@@ -323,7 +321,39 @@ int Server::getEnemyIndex(Player& player) {
    return player.getID()%2 == 0 ? player.getID()-1 : player.getID()+1;
 }
 
+/**
+ * @brief Draws an ASCII hand signal for rock, paper, or scissors.
+ * @param choice rock, paper, scissors
+ * @return the text based animations of rock, paper, scissors
+*/
+string Server::drawChoice(string choice) {
+   if (choice.compare("rock") == 0) {
+      return "    ______\n"
+             "---'   ___)_\n"
+             "      (_____)\n"
+             "      (_____)\n"
+             "      (____)\n"
+             "---.__(___)\n";
+   }
+   else if (choice.compare("paper") == 0) {
+      return "    _______\n"
+             "---'   _____)___\n"
+             "          ______)\n"
+             "          _______)\n"
+             "         _______)\n"
+             "---.__________)\n";
 
+   }
+   else { // scissors
+      return "    _______\n"
+             "---'   ____)____\n"
+             "          ______)\n"
+             "       __________)\n"
+             "      (____)\n"
+             "---.__(___)\n";
+   }
+
+}
 /**
  * @brief Sends a message to the player object
  * @param player the player the message is getting sent to
@@ -332,12 +362,12 @@ int Server::getEnemyIndex(Player& player) {
 void Server::sendMsg(Player &player, string msg) {
    // sleeps a thread based on their current player ID in hopes of offsetting their entry time
    // this should allow enough time for 1 thread to get the threadLock before the other skips the while loop
-   this_thread::sleep_for(chrono::microseconds(player.getID()*1000));
+   this_thread::sleep_for(chrono::microseconds(player.getID()*100000));
 
    // This will lock all threads while one thread is sending a message
    while (threadLock) {
       // each thread will wait for different times so they dont all get released at once and hog the threadLock
-      this_thread::sleep_for(chrono::microseconds(player.getID()*1000));
+      this_thread::sleep_for(chrono::microseconds(player.getID()*100000));
    }
 
    // sets the threadLock so other threads will wait

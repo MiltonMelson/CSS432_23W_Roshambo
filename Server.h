@@ -34,6 +34,7 @@ class Server {
       void waitForAnswers(Player &player);
       void determineWinner(Player &player);
       int getEnemyIndex(Player &player);
+      string drawChoice(string choice);
       void sendMsg(Player &player, string msg);
       void recvMsg(Player &player);
 };

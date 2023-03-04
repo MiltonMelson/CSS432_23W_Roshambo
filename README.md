@@ -11,7 +11,9 @@
    - Client ./test "Server IP address"
 
 # Game Play
-<img width="1173" alt="Screenshot 2023-01-16 at 10 43 36 AM" src="./game_play_screenshot.png">
+<img width="1173" src="./round1.png">
+<img width="1173" src="./round2-3.png">
+<img width="1173" src="./round4.png">
 
 # Directions
 <img width="1173" alt="Screenshot 2023-01-16 at 10 43 36 AM" src="https://user-images.githubusercontent.com/77636982/212747324-23aad9ab-4b6d-4ff2-b383-83c64c3689fe.png">
