@@ -33,8 +33,13 @@ Socket::~Socket() {
  * @return the data in each thread
 */
 void* threadFunc(void *data) {
-   static Server game;     // Creates the game server only once
-   game.startMenu(data);   // sends in each thread to the game
+   try {
+      static Server game;     // Creates the game server only once
+      game.startMenu(data);   // sends in each thread to the game
+   }
+   catch (exception& e) {
+      cout << "An exception occured: " << e.what() << endl;
+   }
    return data;            // returns the data of each thread
 }
 

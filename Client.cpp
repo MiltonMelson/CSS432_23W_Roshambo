@@ -98,9 +98,24 @@ void Client::bestOutOfThree() {
          cout << result.substr(0, result.length()-4);
          break;
       }
+      if (result.substr(result.length()-10, result.length()).compare("disconnect") == 0) {
+         cout << result.substr(0, result.length()-10);
+         cout << "\n\nGame is shutting down...\n\n";
+         exit(1);
+      }
       cout << result;
    }
-   char endGame[11] = {'G', 'a', 'm', 'e', ' ', 'o', 'v', 'e', 'r', '\n'};
+   string endGame[11] = {
+      "G", 
+      "   a", 
+      "      m", 
+      "         e", 
+      "             ", 
+      "               o", 
+      "                  v", 
+      "                     e", 
+      "                        r", 
+      "\n"};
    for (int i = 0; i < 11; i++) {
       cout << endGame[i] << endl;
    }

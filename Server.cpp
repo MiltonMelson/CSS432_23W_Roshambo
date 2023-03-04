@@ -236,6 +236,19 @@ void Server::determineWinner(Player &player) {
    
    stringstream msg;                            // the message to be sent after determining the winner
 
+   // if player disconnects mid game
+   if (p2.compare("") == 0) {
+      cout << "Player " << getEnemyIndex(player) << " has disconnected!" << endl;
+      msg << "\nOpponent Disconnected...\n\n You Win the Match!\n\ndisconnect";
+      sendMsg(player, msg.str());            // send terminating message to player
+      scoreboard[player.getID()] = 2;        // increase scoreboard to break loop in startGame
+      answers[player.getID()] = "0";         // reset answers for player
+      answers[getEnemyIndex(player)] = "0";  // reset enemies answers
+      scoreboard[getEnemyIndex(player)] = 0; // reset disconected players scoreboard
+      roster[getEnemyIndex(player)] = 0;     // reset enemies roster
+      return;
+   }
+
    msg << "\n\n" << drawChoice(p1) << "\n\n    vs    \n\n" << drawChoice(p2) << "\n\n";
 
    if (p1.compare("rock") == 0) {               // player 1 picks rock
@@ -321,6 +334,7 @@ int Server::getEnemyIndex(Player& player) {
    return player.getID()%2 == 0 ? player.getID()-1 : player.getID()+1;
 }
 
+
 /**
  * @brief Draws an ASCII hand signal for rock, paper, or scissors.
  * @param choice rock, paper, scissors
@@ -354,6 +368,8 @@ string Server::drawChoice(string choice) {
    }
 
 }
+
+
 /**
  * @brief Sends a message to the player object
  * @param player the player the message is getting sent to
