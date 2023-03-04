@@ -104,7 +104,7 @@ void Server::startGame(Player &player) {
    roster[player.getID()] = 0;
    cout << "Player " << player.getID() << " has left the game!" << endl;
    while (roster[getEnemyIndex(player)] != 0) {
-      // wait for opponent to exit before reseting scoreboard 
+      // wait for opponent to exit before resetting scoreboard 
    }
    scoreboard[player.getID()] = 0;
    player.setID(0);     // set players id to 0 for inactive
