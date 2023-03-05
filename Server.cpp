@@ -64,6 +64,7 @@ void Server::startMenu(void* info) {
          case 5:                    // starts the game
             startGame(player);
             player.setGuest();
+            this_thread::sleep_for(chrono::microseconds(15000000));
             break;
          case 6:                    // exits the game
             exit = true;
@@ -107,6 +108,9 @@ void Server::startGame(Player &player) {
       // wait for opponent to exit before resetting scoreboard 
    }
    scoreboard[player.getID()] = 0;
+   if (player.getID()%2==0) {
+      this_thread::sleep_for(chrono::microseconds(1000000));
+   }
    player.setID(0);     // set players id to 0 for inactive
 }
 
@@ -379,7 +383,7 @@ void Server::sendMsg(Player &player, string msg) {
    // sleeps a thread based on their current player ID in hopes of offsetting their entry time
    // this should allow enough time for 1 thread to get the threadLock before the other skips the while loop
    this_thread::sleep_for(chrono::microseconds(player.getID()*100));
-
+   
    // This will lock all threads while one thread is sending a message
    while (threadLock) {
       // each thread will wait for different times so they dont all get released at once and hog the threadLock
