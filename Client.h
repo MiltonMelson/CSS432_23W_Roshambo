@@ -20,7 +20,7 @@ class Client {
       int sd;              // the clients socket descriptor
       char buffer[8000];   // the message buffer 
 
-      int menuChoice();
+      string menuChoice();
       void playGame();
       string makeChoice();
       void bestOutOfThree();

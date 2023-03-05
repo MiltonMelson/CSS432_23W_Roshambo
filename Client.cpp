@@ -29,18 +29,21 @@ Client::~Client() {
  * @brief Asks the user to select an option based on the menu recieved from the server.
  * @return returns the selected option between 1-6
 */
-int Client::menuChoice() {
-   int ans = 0;
-   while (ans == 0) {
+string Client::menuChoice() {
+   string ans = "0";
+   while (ans.compare("0") == 0) {
       cout << "Type in your option (1 - 6): ";
       cin >> ans;
-      if (ans > 1 || ans < 6) {
-         break;
+      if (isdigit(ans[0])) {
+         if (stoi(ans) > 1 || stoi(ans) < 6) {
+            break;
+         }
       }
-      ans = 0;
+      ans = "0";
       cout << "Invalid option.\n";
    }
-   sendMsg(to_string(ans));
+
+   sendMsg(ans);
    return ans;
 }
 
@@ -55,9 +58,8 @@ void Client::playGame() {
    while (true) {
       recvMsg();        // recieves menu message
       cout << buffer;
-      int option = menuChoice();
 
-      switch (option) {
+      switch (stoi(menuChoice())) {
          case 1:        // recieve rules message
             recvMsg();   
             cout << buffer;
@@ -118,6 +120,7 @@ void Client::bestOutOfThree() {
       "\n"};
    for (int i = 0; i < 11; i++) {
       cout << endGame[i] << endl;
+      sleep(1);
    }
 }
 
