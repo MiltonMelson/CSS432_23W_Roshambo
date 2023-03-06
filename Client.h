@@ -21,11 +21,14 @@ class Client {
       char buffer[8000];   // the message buffer 
 
       string menuChoice();
+      void displayStats();
+      bool reglogPlayer();
       void playGame();
       string makeChoice();
       void bestOutOfThree();
       int convertAnswer(string &input);   // verifies input and converts from string to int
       void convertToLower(string &input); // converts a string to lowercase
+      void printBuffer();
       void sendMsg(string msg);           // sends a message through the socket descriptor
       void recvMsg();                     // recieves a message from the socket descriptor
 };

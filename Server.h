@@ -29,12 +29,20 @@ class Server {
       void welcomeMessage(Player &player);
       void menuMessage(Player &player);
       void displayRules(Player &player);
-      string displayBoard();
+      int displayStat(Player &player, Data &data);
+      int displayBoard(Player &player, Data &data);
+      int regPlayer(Player &player, Data &data);
+      int logPlayer(Player &player, Data &data);
       void assignPlayerID(Player &player);
       void waitForAnswers(Player &player);
       void determineWinner(Player &player);
       int getEnemyIndex(Player &player);
       string drawChoice(string choice);
+
+   private:
+      char buffer[8000];
+
+      string displayErr(int code);
       void sendMsg(Player &player, string msg);
       void recvMsg(Player &player);
 };
