@@ -14,10 +14,10 @@ Client::~Client() {
 string Client::menuChoice() {
    string ans = "0";
    while (ans.compare("0") == 0) {
-      cout << "Type in your option (1 - 6): ";
+      cout << "Type in your option (1 - 7): ";
       cin >> ans;
       if (isdigit(ans[0])) {
-         if (stoi(ans) > 1 || stoi(ans) < 6) {
+         if (stoi(ans) >= 1 || stoi(ans) <= 7) {
             break;
          }
       }
@@ -29,26 +29,68 @@ string Client::menuChoice() {
    return ans;
 }
 
+// Change
 void Client::playGame() {
-   recvMsg(sd); // clears buffer and receives welcome message
-   cout << buffer; // output message
+   printBuffer();
 
    string option = "0";
-   while (option.compare("6") != 0) {
-      recvMsg(sd);   // recieve menu message
-      cout << buffer;
+   while (option.compare("7") != 0) {
+      printBuffer();
       option = menuChoice();
-      if (option.compare("1") == 0) {
-         recvMsg(sd);   // recieve rules message
-         cout << buffer;   
-      }
-      if (option.compare("2") == 0) {}
-      if (option.compare("3") == 0) {}
-      if (option.compare("4") == 0) {}
-      if (option.compare("5") == 0) {
-         bestOutOfThree();
+      int choice = atoi(option.c_str());
+      switch(choice) {
+         case 1:
+            // View the rules
+            printBuffer();
+            break;
+         case 2:
+            // View the stats of an existing player
+            displayStats();
+            break;
+         case 3:
+            // View the leaderboard
+            printBuffer();
+            break;
+         case 4:
+            // Register as a new player
+            if (reglogPlayer()) {
+               bestOutOfThree();
+            }
+            break;
+         case 5:
+            // Log in as an existing player
+            if(reglogPlayer()) {
+               bestOutOfThree();
+            }
+            break;
+         case 6:
+            // Play as a guest
+            bestOutOfThree();
+            break;
+         default:
+            continue;
       }
    }
+}
+
+void Client::displayStats() {
+   string ans;
+   printBuffer();
+   cin >> ans;
+   sendMsg(ans);
+   printBuffer();
+}
+
+bool Client::reglogPlayer() {
+   string ans;
+   printBuffer();
+   cin >> ans;
+   sendMsg(ans);
+   string result(buffer);
+   if (result.substr(0, 7).compare("Welcome") == 0) {
+      return true;
+   }
+   return false;
 }
 
 void Client::bestOutOfThree() {
@@ -56,8 +98,7 @@ void Client::bestOutOfThree() {
    int round = 1;
    while (true) {
       // message for each round
-      recvMsg(sd);
-      cout << buffer;
+      printBuffer();
 
       // player makes choice and send to server
       makeChoice();
@@ -70,7 +111,6 @@ void Client::bestOutOfThree() {
       // if message contains Exit then game is over
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
-         break;
          break;
       }
       cout << result;
@@ -114,6 +154,11 @@ void Client::convertToLower(string &input) {
          input[i] = input[i] + 32;
       }
    }
+}
+
+void Client::printBuffer() {
+   recvMsg(sd);
+   cout << buffer;
 }
 
 void Client::sendMsg(string msg) {

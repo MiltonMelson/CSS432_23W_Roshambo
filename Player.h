@@ -11,8 +11,8 @@ class Player {
       void setSD(int sd);
       int getID();
       void setID(int ID);
-      char* getName();
-      void setName(char* name);
+      const char* getName();
+      void setName(const char* name);
       char* getChoice();
       void setChoice(char* ans);
       int getRound();
@@ -27,7 +27,7 @@ class Player {
    private:
       int socketDescriptor;
       int playerNumber;
-      char* playerName;
+      const char* playerName;
       char* choice;
       int round;
       int match;

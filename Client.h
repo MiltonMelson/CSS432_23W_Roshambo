@@ -11,6 +11,8 @@ class Client {
       Client(int socket);
       ~Client();
       string menuChoice();
+      void displayStats();
+      bool reglogPlayer();
       void playGame();
       void makeChoice();
       void bestOutOfThree();
@@ -19,9 +21,10 @@ class Client {
       int sd;
       string choice;
       char buffer[8000];
-
+      
       int convertAnswer(string &input);
       void convertToLower(string &input);
+      void printBuffer();
       void sendMsg(string msg);
       void recvMsg(int sd);
 };

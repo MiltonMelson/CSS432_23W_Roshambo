@@ -24,8 +24,8 @@ Server::~Server() {
    cout << "Goodbye..." << endl;
 }
 
-// In progress
 void Server::startMenu(void* info) {
+   Data data("textfile.txt");
    Player player = *(Player*)info;  // store info into player
    bool exit = false;
    int ans = 0;
@@ -35,33 +35,50 @@ void Server::startMenu(void* info) {
       menuMessage(player);
       recvMsg(player);
       ans = atoi(buffer);
+      int code;
       switch(ans) {
          case 1:
-            displayRules(player);
+            code = 1;
             displayRules(player);
             break;
          case 2:
-            sendMsg(player, displayBoard());
+            code = displayStat(player, data);
             break;
          case 3:
-            //Register User
+            code = displayBoard(player, data);
             break;
          case 4:
-            // Sign in as User
+            code = regPlayer(player, data);
+            if (code == 1) {
+               startGame(player);
+               scoreboard[player.getID()] = 0;
+            };
             break;
          case 5:
+            code = logPlayer(player, data);
+            if (code == 1) {
+               startGame(player);
+               scoreboard[player.getID()] = 0;
+            };
+            break;
+         case 6:
+            code = 1;
             startGame(player);
             player.setGuest();
             scoreboard[player.getID()] = 0;
             break;
-         case 6:
+         case 7:
+            code = 1;
             roster[player.getID()] = 0;
             exit = true;
-            return;
+            break;
          default:
             continue;
       }
-   }
+      if (code != 1) {
+         sendMsg(player, displayErr(code));
+      }  
+   }   
    close(player.getSD());  // close players socket descriptor
 }
 
@@ -96,12 +113,13 @@ void Server::welcomeMessage(Player &player) {
 void Server::menuMessage(Player &player) {
    stringstream msg;
    msg << "Main Menu:\n" <<
-   "1: View the rules\n" << 
-   "2: View the leaderboard\n" << 
-   "3: Register as a new player\n" <<
-   "4: Log in as an existing player\n" << 
-   "5: Play as a guest\n" <<
-   "6: Exit Game\n" << endl;
+   "1: View the rules\n" <<
+   "2: View the stats of an existing player\n" <<
+   "3: View the leaderboard\n" << 
+   "4: Register as a new player\n" <<
+   "5: Log in as an existing player\n" << 
+   "6: Play as a guest\n" <<
+   "7: Exit Game\n" << endl;
    string temp(msg.str());
    sendMsg(player, temp);
 }
@@ -115,11 +133,55 @@ void Server::displayRules(Player &player) {
    sendMsg(player, temp);
 }
 
-// In progress
-string Server::displayBoard() {
-   stringstream msg;
-   string temp;
-   return temp;
+int Server::displayStat(Player &player, Data &data) {
+   string ans;
+
+   sendMsg(player, "Type the name for the player's stats you want to view: ");
+   recvMsg(player);
+
+   int resp = data.getStats(ans, buffer);
+   if (resp == 1) {
+      sendMsg(player, ans);
+   }
+   return resp;
+}
+
+int Server::displayBoard(Player &player, Data &data) {
+   string ans = "~~~ Roshambo Leaderboard! ~~~\n";
+   int resp = data.getBoard(ans);
+   if (resp == 1) {
+      sendMsg(player, ans);
+   }
+   return resp;
+}
+
+int Server::regPlayer(Player &player, Data &data) {
+   string name;
+
+   sendMsg(player, "Type in your username (alphanumeric only, max 20 chars.): ");
+   recvMsg(player);
+
+   int resp = data.regUser(name);
+   if (resp == 1) {
+      sendMsg(player, "Welcome to Roshambo, " + name + "!");
+      player.setName(name.c_str());
+   }
+
+   return resp;
+}
+
+int Server::logPlayer(Player &player, Data &data) {
+   string name;
+
+   sendMsg(player, "Username: ");
+   recvMsg(player);
+
+   int resp = data.logUser(name);
+   if (resp == 1) {
+      sendMsg(player, "Welcome back, " + name + "!");
+   }
+
+   return resp;
 }
 
 void Server::waitForPlayers(Player &player) {
@@ -159,7 +221,9 @@ void Server::determineWinner(Player &player) {
       else {
          // Draw
          msg << "Draw!";
-         player.setDraw();
+         if (!player.isGuest()) {
+            player.setDraw();
+         }
       }
    }
    // player 1 picks paper
@@ -177,7 +241,9 @@ void Server::determineWinner(Player &player) {
       else {
          // Draw
          msg << "Draw!";
-         player.setDraw();
+         if (!player.isGuest()) {
+            player.setDraw();
+         }
       }
    }
    // player 1 picks Scissors
@@ -195,7 +261,9 @@ void Server::determineWinner(Player &player) {
       else {
          // Draw
          msg << "Draw!";
-         player.setDraw();
+         if (!player.isGuest()) {
+            player.setDraw();
+         }
       }
    }
    msg << "\n";
@@ -254,18 +322,18 @@ void Server::recvMsg(Player &player) {
    recv(player.getSD(), buffer, sizeof(buffer) , 0);
 }
 
-int Server::getEnemyIndex(Player player) {
+int Server::getEnemyIndex(Player &player) {
    return player.getID()%2 == 1 ? player.getID()+1 : player.getID()-1;
 }
 
-void Server::welcomeMessage(Player player) {
+void Server::welcomeMessage(Player &player) {
    stringstream msg;
    msg << "\n---------------- Welcome to Roshambo ----------------\n\n";
    string temp = msg.str();
    sendMsg(player, temp);
 }
 
-void Server::menuMessage(Player player) {
+void Server::menuMessage(Player &player) {
    stringstream msg;
    msg << "Main Menu:\n" << 
    "1: View the rules\n" << 
@@ -278,11 +346,34 @@ void Server::menuMessage(Player player) {
    sendMsg(player, temp);
 }
 
-void Server::displayRules(Player player) {
+void Server::displayRules(Player &player) {
    stringstream msg;
    msg << "\n~~~~~~ Rules ~~~~~~\n\n" <<
    "Each player will pick either rock, paper, or scissors." <<
    "\n - Rock breaks Scissors\n - Scissors cuts Paper\n - Paper covers Rock\n\n\n";
    string temp = msg.str();
    sendMsg(player, temp);
+}
+
+string Server::displayErr(int code) {
+   stringstream msg;
+   msg << "Error: ";
+   switch(code) {
+      case -3:
+         msg << "Not a valid name...\n";
+         break;
+      case -2:
+         msg << "Name not found...\n";
+         break;
+      case -1:
+         msg << "Error: Name already taken...\n";
+         break;
+      case 0:
+         msg << "Failed to open leaderboard...\n";
+         break;
+      default:
+         msg << "Code not found (" << code << ")\n";
+         break;
+   }
+   return msg.str();
 }
