@@ -26,11 +26,16 @@ class Client {
       void playGame();
       string makeChoice();
       void bestOutOfThree();
-      int convertAnswer(string &input);   // verifies input and converts from string to int
-      void convertToLower(string &input); // converts a string to lowercase
-      void printBuffer();
-      void sendMsg(string msg);           // sends a message through the socket descriptor
-      void recvMsg();                     // recieves a message from the socket descriptor
+      
+   private:
+      int sd;
+      string choice;
+      char buffer[8000];
+
+      int convertAnswer(string &input);
+      void convertToLower(string &input);
+      void sendMsg(string msg);
+      void recvMsg(int sd);
 };
 
 #endif

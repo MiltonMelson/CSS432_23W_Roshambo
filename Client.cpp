@@ -52,8 +52,6 @@ string Client::menuChoice() {
  * @brief Starts the game and directs the user to their desired menu selection
 */
 void Client::playGame() {
-   recvMsg();           // receives welcome message
-   cout << buffer;      // output message
    printBuffer();
 
    string option = "0";
@@ -136,6 +134,26 @@ bool Client::reglogPlayer() {
    return false;
 }
 
+void Client::displayStats() {
+   string ans;
+   printBuffer();
+   cin >> ans;
+   sendMsg(ans);
+   printBuffer();
+}
+
+bool Client::reglogPlayer() {
+   string ans;
+   printBuffer();
+   cin >> ans;
+   sendMsg(ans);
+   string result(buffer);
+   if (result.substr(0, 7).compare("Welcome") == 0) {
+      return true;
+   }
+   return false;
+}
+
 
 /**
  * @brief Creates a best 2 out of 3 environment for the client 
@@ -157,11 +175,6 @@ void Client::bestOutOfThree() {
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
          break;
-      }
-      if (result.substr(result.length()-10, result.length()).compare("disconnect") == 0) {
-         cout << result.substr(0, result.length()-10);
-         cout << "\n\nGame is shutting down...\n\n";
-         exit(1);
       }
       cout << result;
    }
@@ -235,7 +248,7 @@ void Client::convertToLower(string &input) {
 }
 
 void Client::printBuffer() {
-   recvMsg();
+   recvMsg(sd);
    cout << buffer;
 }
 
