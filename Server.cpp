@@ -65,14 +65,14 @@ void Server::startMenu(void* info) {
             code = regPlayer(player, data);
             if (code == 1) {
                startGame(player);
-               scoreboard[player.getID()] = 0;
+               this_thread::sleep_for(chrono::microseconds(15000000));
             };
             break;
          case 5:
             code = logPlayer(player, data);
             if (code == 1) {
                startGame(player);
-               scoreboard[player.getID()] = 0;
+               this_thread::sleep_for(chrono::microseconds(15000000));
             };
             break;
          case 6:

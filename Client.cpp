@@ -248,7 +248,7 @@ void Client::convertToLower(string &input) {
 }
 
 void Client::printBuffer() {
-   recvMsg(sd);
+   recvMsg();
    cout << buffer;
 }
 

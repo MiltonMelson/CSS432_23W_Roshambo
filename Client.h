@@ -34,8 +34,9 @@ class Client {
 
       int convertAnswer(string &input);
       void convertToLower(string &input);
+      void printBuffer();
       void sendMsg(string msg);
-      void recvMsg(int sd);
+      void recvMsg();
 };
 
 #endif
