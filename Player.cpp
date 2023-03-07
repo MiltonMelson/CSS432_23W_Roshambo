@@ -31,11 +31,11 @@ void Player::setID(int ID) {
    playerNumber = ID;
 }
 
-char* Player::getName() {
+const char* Player::getName() {
    return playerName;
 }
 
-void Player::setName(char* name) {
+void Player::setName(const char* name) {
    playerName = name;
 }
 

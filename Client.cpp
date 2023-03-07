@@ -27,20 +27,19 @@ Client::~Client() {
 
 /**
  * @brief Asks the user to select an option based on the menu recieved from the server.
- * @return returns the selected option between 1-6
+ * @return returns the selected option between 1-7
 */
 string Client::menuChoice() {
    string ans = "0";
    while (ans.compare("0") == 0) {
-      cout << "Type in your option (1 - 6): ";
+      cout << "Type in your option (1 - 7): ";
       cin >> ans;
       if (isdigit(ans[0])) {
-         if (stoi(ans) > 1 || stoi(ans) < 6) {
+         if (stoi(ans) >= 1 || stoi(ans) <= 7) {
             break;
          }
       }
       ans = "0";
-      cout << "Invalid option.\n";
    }
 
    sendMsg(ans);
@@ -52,29 +51,73 @@ string Client::menuChoice() {
  * @brief Starts the game and directs the user to their desired menu selection
 */
 void Client::playGame() {
-   recvMsg();           // receives welcome message
-   cout << buffer;      // output message
+   printBuffer();
 
-   while (true) {
-      recvMsg();        // recieves menu message
-      cout << buffer;
-
-      switch (stoi(menuChoice())) {
-         case 1:        // recieve rules message
-            recvMsg();   
-            cout << buffer;
-            sleep(5);
-            break;  
+   string option = "0";
+   while (option.compare("7") != 0) {
+      printBuffer();
+      option = menuChoice();
+      int choice = atoi(option.c_str());
+      switch(choice) {
+         case 1:
+            // View the rules
+            printBuffer();
+            break;
          case 2:
+            // View the stats of an existing player
+            displayStats();
+            break;
          case 3:
+            // View the leaderboard
+            printBuffer();
+            break;
          case 4:
-         case 5:        // play a round of rps
+            // Register as a new player
+            if (reglogPlayer()) {
+               bestOutOfThree();
+            }
+            else {
+               printBuffer();
+            }
+            break;
+         case 5:
+            // Log in as an existing player
+            if(reglogPlayer()) {
+               bestOutOfThree();
+            }
+            else {
+               printBuffer();
+            }
+            break;
+         case 6:
+            // Play as a guest
             bestOutOfThree();
             break;
-         case 6:        // exit the game
-            return;
+         default:
+            continue;
       }
    }
+}
+
+void Client::displayStats() {
+   string ans;
+   printBuffer();
+   cin >> ans;
+   sendMsg(ans);
+   printBuffer();
+}
+
+bool Client::reglogPlayer() {
+   string ans;
+   printBuffer();
+   cin >> ans;
+   sendMsg(ans);
+   printBuffer();
+   string result(buffer);
+   if (result.substr(0, 7).compare("Welcome") == 0) {
+      return true;
+   }
+   return false;
 }
 
 
@@ -84,9 +127,8 @@ void Client::playGame() {
 */
 void Client::bestOutOfThree() {
    while (true) {
-      // message for each round #
-      recvMsg();    
-      cout << buffer;
+      // message for each round
+      printBuffer();
 
       // ask client to make a choice and sends the choice to the server
       sendMsg(makeChoice());  
@@ -99,11 +141,6 @@ void Client::bestOutOfThree() {
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
          break;
-      }
-      if (result.substr(result.length()-10, result.length()).compare("disconnect") == 0) {
-         cout << result.substr(0, result.length()-10);
-         cout << "\n\nGame is shutting down...\n\n";
-         exit(1);
       }
       cout << result;
    }
@@ -176,6 +213,10 @@ void Client::convertToLower(string &input) {
    }
 }
 
+void Client::printBuffer() {
+   recvMsg();
+   cout << buffer;
+}
 
 /**
  * @brief Sends a message through the clients socket descriptor
@@ -185,6 +226,7 @@ void Client::sendMsg(string msg) {
    memset(&buffer, 0, sizeof(buffer));
    strcpy(buffer, msg.c_str());
    send(sd, buffer, sizeof(buffer), 0);
+   usleep(1000);
 }
 
 
@@ -193,5 +235,6 @@ void Client::sendMsg(string msg) {
 */
 void Client::recvMsg() {
    memset(&buffer, 0, sizeof(buffer));
-   recv(sd, buffer, sizeof(buffer), 0); 
+   recv(sd, buffer, sizeof(buffer), 0);
+   usleep(1000);
 }

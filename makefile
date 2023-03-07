@@ -1,5 +1,5 @@
 all:
-	g++ -pthread Socket.cpp Server.cpp Client.cpp Player.cpp main.cpp -o ./test
+	g++ -pthread Client.cpp Data.cpp Player.cpp Server.cpp Socket.cpp main.cpp -o ./test.out
 
 clean:
 	rm *.out

@@ -5,6 +5,7 @@
 
 #include "Data.h"
 #include <fstream>
+#include <sstream>
 #include <queue>
 
 // Need to fully test
@@ -17,147 +18,200 @@ Data::Data(string db) {
 
 Data::~Data() {}
 
-string* Data::getStats(string name) {
-   string* info;
-   fstream fin(database);
-   if (!fin.is_open()) {
-      info[0] = "-1";
-      info[1] = "Error: Could not load leaderboard...";
-      return info;
+// Error codes
+// -3: Not a valid name
+// -2: Couldn't find name
+// -1: Name already taken
+//  0: Failed to load leaderboard
+//  1: Success
+
+int Data::getStats(string &ans, string name) {
+   if (!validEntry(name)) {
+      //sendMsg(player, "Error: Not a valid name...\n");
+      return -3;
    }
 
+   string info[5];
+   fstream fin(database);
+   if (!fin.is_open()) {
+      //sendMsg(player, "Error: Failed to load leaderboard...\n");
+      return 0; // Failed to open
+   }
+
+
    string reader;
-   int section = 0;
    while (getline(fin, reader)) {
-      for (int i = 0; i < reader.length(); i++) {
-         info = readLine(reader);
-      }
-      if (info[0].compare(name)) {
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
+      if (info[0].compare(name) == 0) {
          fin.close();
-         return info;
-      }
-      else {
-         section = 0;
+         ans = printStats(info); // Found name
+         return 1;
       }
    }
    fin.close();
-   return info;
+   //sendMsg(player, "Error: Name not found...\n");
+   return -2; // Couldn't find name
 }
 
-void Data::setStats(Player player) {
-   string* info;
-   string rep = player.getName() + '|' + player.getRound() + '|'+ player.getMatch() + '|' +
-                player.getDraw();
+int Data::setStats(string name, int match, int round, int draw) {
+   cout << "Setting " << name << endl;
+   if (!validEntry(name)) {
+      //sendMsg(player, "Error: Not a valid name...\n");
+      return -2;
+   }
+   stringstream msg;
+   string info[5];
    fstream fin(database);
    if (!fin.is_open()) {
-      info[0] = "-1";
-      info[1] = "Error: Could not load leaderboard...";
-      return;
+      //sendMsg(player, "Error: Failed to load leaderboard...\n");
+      return 0; // Failed to open
    }
 
    ofstream fout("temp.txt");
 
    string reader;
-   int section = 0;
    while (getline(fin, reader)) {
-      for (int i = 0; i < reader.length(); i++) {
-         info = readLine(reader);
-      }
-      if(info[0].compare(player.getName())) {
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
+      if(info[0].compare(name) == 0) {
+         msg << name << "|" << (stoi(info[1]) + match) << "|" << (stoi(info[2]) + round) << "|"
+             << (stoi(info[3]) + draw) << "|" << name.length();
+         string rep = msg.str();
+         cout << rep << endl;
          fout << rep << endl;
       }
       else {
-         fout << info[0] << "|" << info[1] << info[2] << "|" << info[3] << "|" << endl;
+         fout << info[0] << "|" << info[1] << "|" << info[2] << "|"
+              << info[3] << "|" << info[4] << endl;
       }
    }
 
    fin.close();
    fout.close();
-   remove(database.c_str());
-   rename("temp.txt", database.c_str());
+   //remove(database.c_str());
+   //rename("temp.txt", database.c_str());
+   //sendMsg(player, "Player data uploaded to leaderboard!\n");
+   return 1;
 }
 
-void Data::getBoard() {
-   string* info;
+int Data::getBoard(string &ans) {
+   string info[5];
    fstream fin(database);
    if (!fin.is_open()) {
-      info[0] = "-1";
-      info[1] = "Error: Could not load leaderboard...";
-      return;
+      //sendMsg(player, "Error: Failed to load leaderboard...\n");
+      return 0; // Failed to open
    }
-   priority_queue< pair<int, string*> > pq;
-   
+   priority_queue< pair<int, string> > pq;
+   int matches;
+   string stats;
    string reader;
-   int section = 0;
    while (getline(fin, reader)) {
-      info = readLine(reader);
-      pq.push(make_pair(stoi(info[3]), info));
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
+      matches = stoi(info[1]);
+      stats = info[0] + ": " + info[1] + " Matches | " + info[2] + " Rounds | " + info[3] +
+              " Draws\n";
+      pq.push(make_pair(matches, stats));
    }
    fin.close();
+   
+   int i = 1;
+   while (!pq.empty()) {
+      ans += pq.top().second;
+      pq.pop();
+      if (i == 25 || pq.empty()) {
+         break;
+      }
+      i++;
+   }
+   return 1;
 }
 
-bool Data::regUser() {
-   string* info;
+int Data::regUser(string name) {
+   if (!validEntry(name)) {
+      //sendMsg(player, "Error: Not a valid name...\n");
+      return -3;
+   }
+
+   string info[5];
    fstream fin(database);
    if (!fin.is_open()) {
-      info[0] = "-1";
-      info[1] = "Error: Could not load leaderboard...";
-      return false;
+      //sendMsg(player, "Error: Failed to load leaderboard...\n");
+      return 0; // Failed to open
    }
    ofstream fout("temp.txt");
-   string name;
 
    string reader;
-   int section = 0;
    while (getline(fin, reader)) {
-      for (int i = 0; i < reader.length(); i++) {
-         info = readLine(reader);
-      }
-      if(info[0].compare(name)) {
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
+      if(info[0].compare(name) == 0) {
          fin.close();
          fout.close();
          remove("temp.txt");
-         return false;
+         //sendMsg(player, "Error: Name already taken...\n");
+         return -1; // Name already taken
       }
       else {
-         fout << info[0] << "|" << info[1] << info[2] << "|" << info[3] << "|" << endl;
+         fout << info[0] << "|" << info[1] <<"|" << info[2] << "|"
+              << info[3] << "|" << info[0].length() << endl;
       }
    }
-   fout << name << "|0|0|0" << endl;
+   fout << name << "|0|0|0|" << name.length() << endl;
 
    fin.close();
    fout.close();
    remove(database.c_str());
    rename("temp.txt", database.c_str());
-   return true;
+   //sendMsg(player, "New player registered - Welcome " + info[0] + "!\n");
+   return 1; // Inserted new entry
 }
 
-// 
-bool Data::logUser(Player player) {
-   return false;
+int Data::logUser(string name) {
+   if (!validEntry(name)) {
+      //sendMsg(player, "Error: Not a valid name...\n");
+      return -3;
+   }
+
+   string info[5];
+   fstream fin(database);
+   if (!fin.is_open()) {
+      //sendMsg(player, "Error: Failed to load leaderboard...\n");
+      return 0; // Failed to open
+   }
+
+   string reader;
+   while (getline(fin, reader)) {
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
+      if(info[0].compare(name) == 0) {
+         fin.close();
+         //sendMsg(player, "Welcome back " + info[0] + "!\n");
+         return 1; // Found name, log in
+      }
+   }
+   fin.close();
+   //sendMsg(player, "Error: Name not found...\n");
+   return -2; // Couldn't find name
 }
 
-string* Data::readLine(string reader) {
-   string info[4];
+void Data::readLine(string reader, string* info, int length) {
+   string line[length];
    int section = 0;
    for (int i = 0; i < reader.length(); i++) {
       if (reader[i] == '|') {
+         info[section] = line[section];
          section++;
       }
       else {
-         info[section] += reader[i];
+         line[section] += reader[i];
       }
    }
-   return info;
+   info[length - 1] = line[length - 1];
 }
 
-bool logUser(Player player) {
-   return false;
-}
-
-void Data::printStats(string* info) {
-   string msg = "Player: " + info[0] + "\nRounds won: " + info[1] + "\nMatches won: " + info[2] +
+string Data::printStats(string* info) {
+   string msg = "Player: " + info[0] +
+                "\nMatches won: " + info[1] +
+                "\nRounds won: " + info[2] +
                 "\nDraws achieved: " + info[3];
+   return msg;
 }
 
 void Data::convertToLower(string &input) {
@@ -168,6 +222,19 @@ void Data::convertToLower(string &input) {
    }
 }
 
+bool Data::validEntry(string input) {
+   if (input.length() == 0 || input.length() > 20) {
+      return false;
+   }
+   for (int i = 0; i < input.length(); i++) {
+      if(!isalnum(input[i])) {
+         return false;
+      }
+   }
+   return true;
+}
+
+/*
 string Data::encrypt(string info, string pin) {
    string output;
    int sum = 0;
@@ -182,9 +249,4 @@ string Data::encrypt(string info, string pin) {
    }
    return output;
 }
-
-void Data::sendMsg(Player player, string msg) {
-   memset(&buffer, 0, sizeof(buffer));
-   strcpy(buffer, msg.c_str());
-   send(player.getSD(), buffer, sizeof(buffer), 0);
-}
+*/
