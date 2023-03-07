@@ -28,7 +28,7 @@ class Socket {
 
    private:
       const char* PORT;                // port number to listen on
-      struct addrinfo hints, *res;     // containers to store address info
+      struct addrinfo s_hints, *s_res, c_hints, *c_res;     // containers to store address info
       int serverSD, clientSD;          // Socket Descriptor
       int maxThreads;                  // Maximum threads
 };

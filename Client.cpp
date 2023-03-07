@@ -82,9 +82,6 @@ void Client::playGame() {
             if(reglogPlayer()) {
                bestOutOfThree();
             }
-            else {
-               printBuffer();
-            }
             break;
          case 6:
             // Play as a guest
@@ -123,8 +120,8 @@ bool Client::reglogPlayer() {
  * to play a match with another player on the server.
 */
 void Client::bestOutOfThree() {
+   cout << "Waiting for opponent...\n" << endl;
    while (true) {
-      cout << "Waiting for opponent...\n" << endl;
       // message for each round
       printBuffer();
 
@@ -138,7 +135,9 @@ void Client::bestOutOfThree() {
       // if message contains Exit then game is over
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
-         break;
+         cout << result;
+         cout << "Server shutting down, Game Over..." << endl;
+         exit(1);
       }
       cout << result;
    }

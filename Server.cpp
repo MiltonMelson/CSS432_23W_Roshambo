@@ -16,11 +16,13 @@ int matches[numOfPlayers];
 int draws[numOfPlayers];
 int roster[numOfPlayers];           // roster of currently active players in match
 bool threadLock;                    // used to lock sendMsg function to prevent multiple threads sending at the same time 
+int messageTimer;
 
 /**
  * @brief constructor to initialize all variables 
 */
 Server::Server() {
+   messageTimer = 0;
    threadLock = false;
    for (int i = 0; i < numOfPlayers; i++) {
       scoreboard[i] = 0;
@@ -44,11 +46,11 @@ Server::~Server() {
 void Server::startMenu(void* info) {
    Data data("database.txt");
    Player player = *(Player*)info;  // store info into player object
+   player.setID(0);
    bool exit = false;               // if player want to exit the game
    int ans = 0;                     // players selection
 
    welcomeMessage(player);          // sends the welcome message to the player
-
    while (!exit) {
       menuMessage(player);
       recvMsg(player);
@@ -100,7 +102,7 @@ void Server::startMenu(void* info) {
       else {
          this_thread::sleep_for(chrono::microseconds(100000));
       }
-   }   
+   }  
    close(player.getSD());  // close players socket descriptor
 }
 
@@ -166,10 +168,8 @@ void Server::startGame(Player &player, Data &data) {
  * @param player A reference to the player passed from startMenu function
 */
 void Server::welcomeMessage(Player &player) {
-   stringstream msg;
-   msg << "\n---------------- Welcome to Roshambo ----------------\n" << endl;
-   string temp = msg.str();
-   sendMsg(player, temp);
+   string msg = "\n---------------- Welcome to Roshambo ----------------\n\n";
+   sendMsg(player, msg);
 }
 
 
@@ -359,7 +359,7 @@ void Server::determineWinner(Player &player) {
    // if player disconnects mid game
    if (p2.compare("") == 0) {
       cout << "Player " << getEnemyIndex(player) << " has disconnected!" << endl;
-      msg << "\nOpponent Disconnected...\n\n You Win the Match!\n\ndisconnect";
+      msg << "\nOpponent Disconnected...\n\n You Win the Match!\n\nExit";
       sendMsg(player, msg.str());            // send terminating message to player
       scoreboard[player.getID()] = 2;        // increase scoreboard to break loop in startGame
       answers[player.getID()] = "0";         // reset answers for player
@@ -501,14 +501,13 @@ string Server::drawChoice(string choice) {
  * @param msg the message that is being sent
 */
 void Server::sendMsg(Player &player, string msg) {
-   // sleeps a thread based on their current player ID in hopes of offsetting their entry time
-   // this should allow enough time for 1 thread to get the threadLock before the other skips the while loop
-   this_thread::sleep_for(chrono::microseconds(player.getID()*100));
+   ++messageTimer;
+   this_thread::sleep_for(chrono::microseconds(messageTimer*100));
    
    // This will lock all threads while one thread is sending a message
    while (threadLock) {
       // each thread will wait for different times so they dont all get released at once and hog the threadLock
-      this_thread::sleep_for(chrono::microseconds(player.getID()*100));
+      this_thread::sleep_for(chrono::microseconds(messageTimer*100));
    }
 
    // sets the threadLock so other threads will wait
@@ -521,6 +520,7 @@ void Server::sendMsg(Player &player, string msg) {
 
    // resets the threadLock, notifying other threads
    threadLock = false;
+   --messageTimer;
 }
 
 

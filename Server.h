@@ -19,6 +19,7 @@ extern int matches[numOfPlayers];
 extern int draws[numOfPlayers];
 extern int roster[numOfPlayers];       // roster of currently active players in match
 extern bool threadLock;                // used to lock sendMsg function to prevent multiple threads sending at the same time
+extern int messageTimer;
 
 class Server {
    public:

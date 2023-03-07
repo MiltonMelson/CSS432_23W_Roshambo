@@ -26,7 +26,6 @@ int main(int argc, char *argv[]) {
 
       // trys to create the client socket and connects to server
       if (socket.createClient(argv[1])) { 
-
          // if connected create the client and pass in the socket descriptor
          Client player(socket.getClientSD());   
       }

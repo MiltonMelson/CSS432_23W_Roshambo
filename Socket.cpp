@@ -5,13 +5,20 @@
 
 #include "Server.h"
 #include "Socket.h"
+#include <thread>
+#include <condition_variable>
+
+mutex mutexLock;
+condition_variable cv;
+bool serverShutdown;
 
 /**
  * @brief Constructor, sets the port number and maximum number of threads
 */
 Socket::Socket() {
    PORT = (char*)"8080";
-   maxThreads = 100; 
+   maxThreads = 100;
+   serverShutdown = false; 
 }
 
 
@@ -21,9 +28,8 @@ Socket::Socket() {
 Socket::~Socket() {
    // close socket descriptor
    close(clientSD);
-   close(serverSD);
    // free address info stored at res
-   freeaddrinfo(res);
+   freeaddrinfo(c_res);
 }
 
 
@@ -49,30 +55,33 @@ void* threadFunc(void *data) {
 */
 void Socket::createServer() {
    // setup address socket address info
-   memset(&hints, 0, sizeof(hints));   // set block of memory to 0
-   hints.ai_family = AF_UNSPEC;        // IPv4 or IPv6
-   hints.ai_socktype = SOCK_STREAM;    // TCP stream sockets
-   hints.ai_flags = AI_PASSIVE;        // fill in my IP for me 
+   memset(&s_hints, 0, sizeof(s_hints));   // set block of memory to 0
+   s_hints.ai_family = AF_UNSPEC;        // IPv4 or IPv6
+   s_hints.ai_socktype = SOCK_STREAM;    // TCP stream sockets
+   s_hints.ai_flags = AI_PASSIVE;        // fill in my IP for me 
 
    // get the address info and store into res
    int status; 
-   if ((status = getaddrinfo(NULL, PORT, &hints, &res)) != 0) {
+   if ((status = getaddrinfo(NULL, PORT, &s_hints, &s_res)) != 0) {
       cerr << "Error: getaddrinfo" << endl;
       return;
    }
 
    // make a socket
-   if ((serverSD = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+   if ((serverSD = socket(s_res->ai_family, s_res->ai_socktype, s_res->ai_protocol)) < 0) {
       cerr << "Error: Creating socket" << endl;
       return;
    }
 
    // lose the pesky "Address already in use" error message
-   const int yes = 1;
-   setsockopt(serverSD, SOL_SOCKET, SO_REUSEADDR, (char *)&yes, sizeof(yes));
+   int yes = 1;
+   if ((setsockopt(serverSD, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1)) {
+      perror("setsockopt");
+      exit(1);
+   }
 
    // bind the socket
-   if (bind(serverSD, res->ai_addr, res->ai_addrlen) < 0) {
+   if (bind(serverSD, s_res->ai_addr, s_res->ai_addrlen) < 0) {
       cerr << "Error: failed to bind to socket" << endl;
       return;
    }
@@ -98,14 +107,28 @@ void Socket::createServer() {
       }
       // create a new posix thread for each accepted player
       Player data(newSd);
-      int iret1 = pthread_create(&tid[threadCount], NULL, threadFunc, (void*)&data);
+      try {
+        if (pthread_create(&tid[threadCount], NULL, threadFunc, (void*)&data) != 0) {
+            throw runtime_error("Error creating thread");
+            std::unique_lock<std::mutex> lock(mutexLock);
+            while (!serverShutdown) {
+               cv.wait(lock);
+            }
+         }
+      } catch (const std::exception& e) {
+         cerr << "Exception caught: " << e.what() << std::endl;
+      }
       threadCount++;
    }
-
+   unique_lock<std::mutex> lock(mutex);
+   serverShutdown = true;
+   cv.notify_all();
    // Wait for child threads created before main thread ends
    for (int i = 0; i < threadCount; i++) {
       pthread_join(tid[i], NULL);
    }
+   close(serverSD);
+   freeaddrinfo(s_res);
 }
 
 
@@ -116,20 +139,20 @@ void Socket::createServer() {
 */
 int Socket::createClient(const char* destinationAddr) {
    // setup address socket address info
-   memset(&hints, 0, sizeof(hints));   // set block of memory to 0
-   hints.ai_family = AF_UNSPEC;        // IPv4 or IPv6
-   hints.ai_socktype = SOCK_STREAM;    // TCP stream sockets
-   hints.ai_flags = AI_PASSIVE;        // fill in my IP for me 
+   memset(&c_hints, 0, sizeof(c_hints));   // set block of memory to 0
+   c_hints.ai_family = AF_UNSPEC;        // IPv4 or IPv6
+   c_hints.ai_socktype = SOCK_STREAM;    // TCP stream sockets
+   c_hints.ai_flags = AI_PASSIVE;        // fill in my IP for me 
 
    // get address info and store into *res
    int status;
-   if ((status = getaddrinfo(destinationAddr, PORT, &hints, &res)) < 0) {
+   if ((status = getaddrinfo(destinationAddr, PORT, &c_hints, &c_res)) < 0) {
       cerr << "Error: getaddrinfo" << endl;
       return 0;
    }
 
    // create a socket
-   if ((clientSD = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
+   if ((clientSD = socket(c_res->ai_family, c_res->ai_socktype, c_res->ai_protocol)) < 0) {
       cerr << "Error: Creating socket" << endl;
       return 0;
    }
@@ -140,7 +163,7 @@ int Socket::createClient(const char* destinationAddr) {
 
    printf("Connecting to Server...\n\n");
    // connect to server through socket descriptor
-   if (connect(clientSD, res->ai_addr, res->ai_addrlen) < 0) {
+   if (connect(clientSD, c_res->ai_addr, c_res->ai_addrlen) < 0) {
       cerr << "Error: Connecting to server" << endl;
       close(clientSD);
       return 0;
