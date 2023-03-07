@@ -8,7 +8,7 @@
 
 #include "Socket.h"
 
-   static string database;
+static string database;
 
 class Data {
    public:
@@ -22,7 +22,7 @@ class Data {
       int logUser(string name);
 
    private:
-      string* readLine(string reader);
+      void readLine(string reader, string* info, int length);
       string printStats(string* info);
       void convertToLower(string &input);
       bool validEntry(string input);

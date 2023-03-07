@@ -27,7 +27,7 @@ Client::~Client() {
 
 /**
  * @brief Asks the user to select an option based on the menu recieved from the server.
- * @return returns the selected option between 1-6
+ * @return returns the selected option between 1-7
 */
 string Client::menuChoice() {
    string ans = "0";
@@ -40,7 +40,6 @@ string Client::menuChoice() {
          }
       }
       ans = "0";
-      cout << "Invalid option.\n";
    }
 
    sendMsg(ans);
@@ -77,11 +76,17 @@ void Client::playGame() {
             if (reglogPlayer()) {
                bestOutOfThree();
             }
+            else {
+               printBuffer();
+            }
             break;
          case 5:
             // Log in as an existing player
             if(reglogPlayer()) {
                bestOutOfThree();
+            }
+            else {
+               printBuffer();
             }
             break;
          case 6:
@@ -107,46 +112,7 @@ bool Client::reglogPlayer() {
    printBuffer();
    cin >> ans;
    sendMsg(ans);
-   string result(buffer);
-   if (result.substr(0, 7).compare("Welcome") == 0) {
-      return true;
-   }
-   return false;
-}
-
-void Client::displayStats() {
-   string ans;
    printBuffer();
-   cin >> ans;
-   sendMsg(ans);
-   printBuffer();
-}
-
-bool Client::reglogPlayer() {
-   string ans;
-   printBuffer();
-   cin >> ans;
-   sendMsg(ans);
-   string result(buffer);
-   if (result.substr(0, 7).compare("Welcome") == 0) {
-      return true;
-   }
-   return false;
-}
-
-void Client::displayStats() {
-   string ans;
-   printBuffer();
-   cin >> ans;
-   sendMsg(ans);
-   printBuffer();
-}
-
-bool Client::reglogPlayer() {
-   string ans;
-   printBuffer();
-   cin >> ans;
-   sendMsg(ans);
    string result(buffer);
    if (result.substr(0, 7).compare("Welcome") == 0) {
       return true;
@@ -260,6 +226,7 @@ void Client::sendMsg(string msg) {
    memset(&buffer, 0, sizeof(buffer));
    strcpy(buffer, msg.c_str());
    send(sd, buffer, sizeof(buffer), 0);
+   usleep(1000);
 }
 
 
@@ -268,5 +235,6 @@ void Client::sendMsg(string msg) {
 */
 void Client::recvMsg() {
    memset(&buffer, 0, sizeof(buffer));
-   recv(sd, buffer, sizeof(buffer), 0); 
+   recv(sd, buffer, sizeof(buffer), 0);
+   usleep(1000);
 }

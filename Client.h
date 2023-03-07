@@ -18,6 +18,7 @@ class Client {
       
    private:
       int sd;              // the clients socket descriptor
+      string choice;
       char buffer[8000];   // the message buffer 
 
       string menuChoice();
@@ -26,12 +27,6 @@ class Client {
       void playGame();
       string makeChoice();
       void bestOutOfThree();
-      
-   private:
-      int sd;
-      string choice;
-      char buffer[8000];
-
       int convertAnswer(string &input);
       void convertToLower(string &input);
       void printBuffer();

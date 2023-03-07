@@ -7,8 +7,8 @@
    - "make clean"
 
 ### To run
-   - Server ./test
-   - Client ./test "Server IP address"
+   - Server ./test.out
+   - Client ./test.out "Server IP address"
 
 # Game Play
 <img width="1173" src="./round1.png">

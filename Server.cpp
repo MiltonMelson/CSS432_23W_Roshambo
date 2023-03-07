@@ -8,8 +8,12 @@
 #include <sstream>
 #include <thread>
 
-int scoreboard[numOfPlayers];       // temp scoreboard of each match        
+int scoreboard[numOfPlayers];       // temp scoreboard of each match
 string answers[numOfPlayers];       // storage for each players provided answers
+string users[numOfPlayers];
+int rounds[numOfPlayers];
+int matches[numOfPlayers];
+int draws[numOfPlayers];
 int roster[numOfPlayers];           // roster of currently active players in match
 bool threadLock;                    // used to lock sendMsg function to prevent multiple threads sending at the same time 
 
@@ -38,7 +42,7 @@ Server::~Server() {
  * @param info the thread info for each player provided from the thread function in socket.cpp
 */
 void Server::startMenu(void* info) {
-   Data data("textfile.txt");
+   Data data("database.txt");
    Player player = *(Player*)info;  // store info into player object
    bool exit = false;               // if player want to exit the game
    int ans = 0;                     // players selection
@@ -46,6 +50,7 @@ void Server::startMenu(void* info) {
    welcomeMessage(player);          // sends the welcome message to the player
 
    while (!exit) {
+      sleep(1);
       menuMessage(player);
       recvMsg(player);
       ans = atoi(buffer);
@@ -64,21 +69,21 @@ void Server::startMenu(void* info) {
          case 4:
             code = regPlayer(player, data);
             if (code == 1) {
-               startGame(player);
+               startGame(player, data);
                this_thread::sleep_for(chrono::microseconds(15000000));
             };
             break;
          case 5:
             code = logPlayer(player, data);
             if (code == 1) {
-               startGame(player);
+               startGame(player, data);
                this_thread::sleep_for(chrono::microseconds(15000000));
             };
             break;
          case 6:
             code = 1;
-            startGame(player);
             player.setGuest();
+            startGame(player, data);
             this_thread::sleep_for(chrono::microseconds(15000000));
             break;
          case 7:
@@ -91,7 +96,11 @@ void Server::startMenu(void* info) {
       }
       if (code != 1) {
          sendMsg(player, displayErr(code));
-      }  
+         sleep(1);
+      }
+      else {
+         sleep(3);
+      }
    }   
    close(player.getSD());  // close players socket descriptor
 }
@@ -101,10 +110,21 @@ void Server::startMenu(void* info) {
  * @brief Starts the game for the provided player object
  * @param player A reference to the player created in startMenu function
 */
-void Server::startGame(Player &player) {
+void Server::startGame(Player &player, Data &data) {
    assignPlayerID(player);    // assigns the current player a temp number for the match
 
-   cout << "Player " << player.getID() << " has joined the game!" << endl;
+   if (!player.isGuest()) {
+      users[player.getID()] = player.getName();
+   }
+   else {
+      users[player.getID()] = "Guest" + player.getID();
+   }
+   users[player.getID()] = player.getName();
+   rounds[player.getID()] = 0;
+   matches[player.getID()] = 0;
+   draws[player.getID()] = 0;
+
+   cout << "Player " << player.getName() << " has joined the game!" << endl;
 
    int score = 0;             // the current players score
    int enemyScore = 0;        // the enemies score
@@ -120,10 +140,16 @@ void Server::startGame(Player &player) {
       score = scoreboard[player.getID()];    // gets score
       enemyScore = scoreboard[getEnemyIndex(player)]; // gets the enemy score
    }
+   if (!player.isGuest()) {
+         cout << "Here" << endl;
+         data.setStats(users[player.getID()], matches[player.getID()], rounds[player.getID()],
+                       draws[player.getID()]);
+   }
 
    // removes the player from the roster and scoreboard
    roster[player.getID()] = 0;
-   cout << "Player " << player.getID() << " has left the game!" << endl;
+   cout << users[player.getID()] << " has left the game!" << endl;
+   users[player.getID()] = "";
    while (roster[getEnemyIndex(player)] != 0) {
       // wait for opponent to exit before resetting scoreboard 
    }
@@ -170,7 +196,8 @@ void Server::menuMessage(Player &player) {
  * @brief Creats and sends the message for the rules of the game to the player
  * @param player A reference to the player passed from startMenu function
 */
-void Server::displayRules(Player &player) {
+void Server::displayRules(Player &player) { 
+      cout << "[Rule] Displaying rules" << endl;
    stringstream msg;
    msg << "\n~~~ Rules ~~~\n\n" <<
    "Each player will pick either rock, paper, or scissors." <<
@@ -178,53 +205,6 @@ void Server::displayRules(Player &player) {
    string temp = msg.str();
    sendMsg(player, temp);
 }
-
-
-/**
- * @brief Assigns the player an ID for indexing in global variables.
- * The player will be assigned the index based on available slots in roster.
- * If a player is assigned to a slot and it does not get an enemy in 15 secs it
- * will reset their ID and remove them from the roster and search for a new ID in roster.
- * If the enemy shows up before 15 secs it will break and both players will start the match
- * @param player A reference to the player passed from the startGame function
-*/
-void Server::assignPlayerID(Player &player) {
-   while (true) {
-
-      // search roster for open slot
-      for (int i = 1; i < numOfPlayers; i++) {
-         if (roster[i] == 0) {
-            roster[i] = 1;
-            player.setID(i);
-            break;
-         }
-      }
-
-      // start timer for thread to possibly reset and search again
-      int timer = 0;
-      while (roster[getEnemyIndex(player)] == 0) {
-         // wait for opponent
-         this_thread::sleep_for(chrono::microseconds(1000000));
-         ++timer;
-         if (timer >= 15) {
-            roster[player.getID()] = 0;
-            player.setID(0);
-            break;
-         }
-      }
-
-      // if player ID is 0 then no opponent found restart search
-      if (player.getID() == 0) {
-         continue;
-      }
-      // else opponent found leave function
-      else {
-         return;
-      }
-   }
-}
-
-
 
 /**
  * @brief Assigns the player an ID for indexing in global variables.
@@ -277,9 +257,11 @@ int Server::displayStat(Player &player, Data &data) {
    sendMsg(player, "Type the name for the player's stats you want to view: ");
    recvMsg(player);
 
+   cout << "[Stat] Searching for " << buffer << "..." << endl;
    int resp = data.getStats(ans, buffer);
    if (resp == 1) {
-      sendMsg(player, ans);
+      cout << "[Stat] Displaying stats for " << buffer << endl;
+      sendMsg(player, ans + "\n\n");
    }
    return resp;
 }
@@ -288,20 +270,26 @@ int Server::displayBoard(Player &player, Data &data) {
    string ans = "~~~ Roshambo Leaderboard! ~~~\n";
    int resp = data.getBoard(ans);
    if (resp == 1) {
-      sendMsg(player, ans);
+      cout << "[Lead] Displaying leaderboard" << endl;
+      sendMsg(player, ans + "\n\n");
    }
    return resp;
 }
 
 int Server::regPlayer(Player &player, Data &data) {
+   
    string name;
 
    sendMsg(player, "Type in your username (alphanumeric only, max 20 chars.): ");
    recvMsg(player);
 
+   name = buffer;
+
+   cout << "[Regi] Searching for " << buffer << "..." << endl;
    int resp = data.regUser(name);
    if (resp == 1) {
-      sendMsg(player, "Welcome to Roshambo, " + name + "!");
+      cout << "[Regi] Registering " << buffer << endl;
+      sendMsg(player, "Welcome to Roshambo, " + name + "!\n\n");
       player.setName(name.c_str());
    }
 
@@ -314,9 +302,13 @@ int Server::logPlayer(Player &player, Data &data) {
    sendMsg(player, "Username: ");
    recvMsg(player);
 
+   name = buffer;
+   cout << "[Logg] Searching for " << buffer << "..." << endl;
    int resp = data.logUser(name);
    if (resp == 1) {
-      sendMsg(player, "Welcome back, " + name + "!");
+      cout << "[Logg] Logging " << buffer << endl;
+      sendMsg(player, "Welcome back, " + name + "!\n");
+      player.setName(name.c_str());
    }
 
    return resp;
@@ -377,9 +369,7 @@ void Server::determineWinner(Player &player) {
       else {
          // Draw
          msg << "Draw!";
-         if (!player.isGuest()) {
-            player.setDraw();
-         }
+         draws[player.getID()]++;
       }
    }
    // player 1 picks paper
@@ -396,9 +386,7 @@ void Server::determineWinner(Player &player) {
       else {
          // Draw
          msg << "Draw!";
-         if (!player.isGuest()) {
-            player.setDraw();
-         }
+         draws[player.getID()]++;
       }
    }
    // player 1 picks Scissors
@@ -415,9 +403,7 @@ void Server::determineWinner(Player &player) {
       else {
          // Draw
          msg << "Draw!";
-         if (!player.isGuest()) {
-            player.setDraw();
-         }
+         draws[player.getID()]++;
       }
    }
 
@@ -435,16 +421,12 @@ void Server::determineWinner(Player &player) {
    if (score == 2 || enemyScore == 2) {
       if (score == 2) {             // if its the current player
          msg << "You Won the Match!\n\n";
-         if (!player.isGuest()) {
-            player.setMatch();
-         }
+         matches[player.getID()]++;
       }
       else {                        // if its the enemy
          msg << "You Lost the Match!\n\n";
       }
-      if (!player.isGuest()) {
-         player.setRound(scoreboard[0]);
-      }
+      rounds[player.getID()] = score;
       msg << "Exit";                // terminating message for client.cpp
    }
    sendMsg(player, msg.str());      // sends the enitre message
@@ -536,39 +518,7 @@ void Server::sendMsg(Player &player, string msg) {
 void Server::recvMsg(Player &player) {
    memset(&buffer, 0, sizeof(buffer));
    recv(player.getSD(), buffer, sizeof(buffer) , 0);
-}
-
-int Server::getEnemyIndex(Player &player) {
-   return player.getID()%2 == 1 ? player.getID()+1 : player.getID()-1;
-}
-
-void Server::welcomeMessage(Player &player) {
-   stringstream msg;
-   msg << "\n---------------- Welcome to Roshambo ----------------\n\n";
-   string temp = msg.str();
-   sendMsg(player, temp);
-}
-
-void Server::menuMessage(Player &player) {
-   stringstream msg;
-   msg << "Main Menu:\n" << 
-   "1: View the rules\n" << 
-   "2: View the leaderboard\n" << 
-   "3: Register as a new player\n" <<
-   "4: Log in as an existing player\n" << 
-   "5: Play as a guest\n" <<
-   "6: Exit Game\n\n";
-   string temp = msg.str();
-   sendMsg(player, temp);
-}
-
-void Server::displayRules(Player &player) {
-   stringstream msg;
-   msg << "\n~~~~~~ Rules ~~~~~~\n\n" <<
-   "Each player will pick either rock, paper, or scissors." <<
-   "\n - Rock breaks Scissors\n - Scissors cuts Paper\n - Paper covers Rock\n\n\n";
-   string temp = msg.str();
-   sendMsg(player, temp);
+   usleep(100);
 }
 
 string Server::displayErr(int code) {
@@ -576,19 +526,19 @@ string Server::displayErr(int code) {
    msg << "Error: ";
    switch(code) {
       case -3:
-         msg << "Not a valid name...\n";
+         msg << "Not a valid name...\n\n";
          break;
       case -2:
-         msg << "Name not found...\n";
+         msg << "Name not found...\n\n";
          break;
       case -1:
-         msg << "Error: Name already taken...\n";
+         msg << "Error: Name already taken...\n\n";
          break;
       case 0:
-         msg << "Failed to open leaderboard...\n";
+         msg << "Failed to open leaderboard...\n\n";
          break;
       default:
-         msg << "Code not found (" << code << ")\n";
+         msg << "Code not found (" << code << ")\n\n";
          break;
    }
    return msg.str();

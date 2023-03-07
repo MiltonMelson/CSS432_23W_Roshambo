@@ -13,6 +13,10 @@
 const int numOfPlayers = 101;          // current max players can go higher unlikely to need to         
 extern int scoreboard[numOfPlayers];   // temp scoreboard of each match           
 extern string answers[numOfPlayers];   // storage for each players provided answers
+extern string users[numOfPlayers];
+extern int rounds[numOfPlayers];
+extern int matches[numOfPlayers];
+extern int draws[numOfPlayers];
 extern int roster[numOfPlayers];       // roster of currently active players in match
 extern bool threadLock;                // used to lock sendMsg function to prevent multiple threads sending at the same time
 
@@ -25,7 +29,7 @@ class Server {
    private:
       char buffer[8000];      // message buffer for the server
 
-      void startGame(Player &player);
+      void startGame(Player &player, Data &data);
       void welcomeMessage(Player &player);
       void menuMessage(Player &player);
       void displayRules(Player &player);
@@ -38,10 +42,6 @@ class Server {
       void determineWinner(Player &player);
       int getEnemyIndex(Player &player);
       string drawChoice(string choice);
-
-   private:
-      char buffer[8000];
-
       string displayErr(int code);
       void sendMsg(Player &player, string msg);
       void recvMsg(Player &player);

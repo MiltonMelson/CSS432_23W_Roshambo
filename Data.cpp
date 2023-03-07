@@ -31,16 +31,17 @@ int Data::getStats(string &ans, string name) {
       return -3;
    }
 
-   string* info;
+   string info[5];
    fstream fin(database);
    if (!fin.is_open()) {
       //sendMsg(player, "Error: Failed to load leaderboard...\n");
       return 0; // Failed to open
    }
 
+
    string reader;
    while (getline(fin, reader)) {
-      info = readLine(reader);
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
       if (info[0].compare(name) == 0) {
          fin.close();
          ans = printStats(info); // Found name
@@ -53,13 +54,13 @@ int Data::getStats(string &ans, string name) {
 }
 
 int Data::setStats(string name, int match, int round, int draw) {
+   cout << "Setting " << name << endl;
    if (!validEntry(name)) {
       //sendMsg(player, "Error: Not a valid name...\n");
       return -2;
    }
-   
    stringstream msg;
-   string* info;
+   string info[5];
    msg << name << "|" << match << "|" << round << "|"
                << draw << "|" << name.length();
    string rep = msg.str();
@@ -73,7 +74,7 @@ int Data::setStats(string name, int match, int round, int draw) {
 
    string reader;
    while (getline(fin, reader)) {
-      info = readLine(reader);
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
       if(info[0].compare(name) == 0) {
          fout << rep << endl;
       }
@@ -85,32 +86,35 @@ int Data::setStats(string name, int match, int round, int draw) {
 
    fin.close();
    fout.close();
-   remove(database.c_str());
-   rename("temp.txt", database.c_str());
+   //remove(database.c_str());
+   //rename("temp.txt", database.c_str());
    //sendMsg(player, "Player data uploaded to leaderboard!\n");
    return 1;
 }
 
 int Data::getBoard(string &ans) {
-   string* info;
+   string info[5];
    fstream fin(database);
    if (!fin.is_open()) {
       //sendMsg(player, "Error: Failed to load leaderboard...\n");
       return 0; // Failed to open
    }
-   priority_queue< pair<int, string*> > pq;
-   
+   priority_queue< pair<int, string> > pq;
+   int matches;
+   string stats;
    string reader;
    while (getline(fin, reader)) {
-      info = readLine(reader);
-      pq.push(make_pair(stoi(info[1]), info));
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
+      matches = stoi(info[1]);
+      stats = info[0] + ": " + info[1] + " Matches | " + info[2] + " Rounds | " + info[3] +
+              " Draws\n";
+      pq.push(make_pair(matches, stats));
    }
    fin.close();
    
    int i = 1;
    while (!pq.empty()) {
-      ans += (pq.top().second)[0] + ": " + (pq.top().second)[1] + " Matches | " + 
-            (pq.top().second)[2] + " Rounds | " + (pq.top().second)[3] + " Draws\n";
+      ans += pq.top().second;
       pq.pop();
       if (i == 25 || pq.empty()) {
          break;
@@ -126,7 +130,7 @@ int Data::regUser(string name) {
       return -3;
    }
 
-   string* info;
+   string info[5];
    fstream fin(database);
    if (!fin.is_open()) {
       //sendMsg(player, "Error: Failed to load leaderboard...\n");
@@ -136,7 +140,7 @@ int Data::regUser(string name) {
 
    string reader;
    while (getline(fin, reader)) {
-      info = readLine(reader);
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
       if(info[0].compare(name) == 0) {
          fin.close();
          fout.close();
@@ -165,7 +169,7 @@ int Data::logUser(string name) {
       return -3;
    }
 
-   string* info;
+   string info[5];
    fstream fin(database);
    if (!fin.is_open()) {
       //sendMsg(player, "Error: Failed to load leaderboard...\n");
@@ -174,7 +178,7 @@ int Data::logUser(string name) {
 
    string reader;
    while (getline(fin, reader)) {
-      info = readLine(reader);
+      readLine(reader, info, sizeof(info)/sizeof(info[0]));
       if(info[0].compare(name) == 0) {
          fin.close();
          //sendMsg(player, "Welcome back " + info[0] + "!\n");
@@ -186,18 +190,19 @@ int Data::logUser(string name) {
    return -2; // Couldn't find name
 }
 
-string* Data::readLine(string reader) {
-   string info[5];
+void Data::readLine(string reader, string* info, int length) {
+   string line[length];
    int section = 0;
    for (int i = 0; i < reader.length(); i++) {
       if (reader[i] == '|') {
+         info[section] = line[section];
          section++;
       }
       else {
-         info[section] += reader[i];
+         line[section] += reader[i];
       }
    }
-   return info;
+   info[length - 1] = line[length - 1];
 }
 
 string Data::printStats(string* info) {
