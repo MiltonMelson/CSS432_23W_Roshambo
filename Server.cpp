@@ -141,7 +141,8 @@ void Server::startGame(Player &player, Data &data) {
       enemyScore = scoreboard[getEnemyIndex(player)]; // gets the enemy score
    }
    if (!player.isGuest()) {
-         cout << "Here" << endl;
+         cout << users[player.getID()] << ", " << matches[player.getID()] << ", " << rounds[player.getID()] << ", "
+              << draws[player.getID()] << endl;
          data.setStats(users[player.getID()], matches[player.getID()], rounds[player.getID()],
                        draws[player.getID()]);
    }
@@ -285,6 +286,12 @@ int Server::regPlayer(Player &player, Data &data) {
 
    name = buffer;
 
+   for (int i = 0; i < numOfPlayers; i++) {
+      if (users[i].compare(name) == 0) {
+         return -1;
+      }
+   }
+
    cout << "[Regi] Searching for " << buffer << "..." << endl;
    int resp = data.regUser(name);
    if (resp == 1) {
@@ -303,6 +310,13 @@ int Server::logPlayer(Player &player, Data &data) {
    recvMsg(player);
 
    name = buffer;
+
+   for (int i = 0; i < numOfPlayers; i++) {
+      if (users[i].compare(name) == 0) {
+         return -1;
+      }
+   }
+
    cout << "[Logg] Searching for " << buffer << "..." << endl;
    int resp = data.logUser(name);
    if (resp == 1) {

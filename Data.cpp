@@ -61,9 +61,6 @@ int Data::setStats(string name, int match, int round, int draw) {
    }
    stringstream msg;
    string info[5];
-   msg << name << "|" << match << "|" << round << "|"
-               << draw << "|" << name.length();
-   string rep = msg.str();
    fstream fin(database);
    if (!fin.is_open()) {
       //sendMsg(player, "Error: Failed to load leaderboard...\n");
@@ -76,6 +73,10 @@ int Data::setStats(string name, int match, int round, int draw) {
    while (getline(fin, reader)) {
       readLine(reader, info, sizeof(info)/sizeof(info[0]));
       if(info[0].compare(name) == 0) {
+         msg << name << "|" << (stoi(info[1]) + match) << "|" << (stoi(info[2]) + round) << "|"
+             << (stoi(info[3]) + draw) << "|" << name.length();
+         string rep = msg.str();
+         cout << rep << endl;
          fout << rep << endl;
       }
       else {
