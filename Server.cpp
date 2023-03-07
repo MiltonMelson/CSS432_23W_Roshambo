@@ -50,7 +50,6 @@ void Server::startMenu(void* info) {
    welcomeMessage(player);          // sends the welcome message to the player
 
    while (!exit) {
-      sleep(1);
       menuMessage(player);
       recvMsg(player);
       ans = atoi(buffer);
@@ -96,10 +95,10 @@ void Server::startMenu(void* info) {
       }
       if (code != 1) {
          sendMsg(player, displayErr(code));
-         sleep(1);
+         this_thread::sleep_for(chrono::microseconds(100000));
       }
       else {
-         sleep(3);
+         this_thread::sleep_for(chrono::microseconds(100000));
       }
    }   
    close(player.getSD());  // close players socket descriptor
@@ -117,7 +116,7 @@ void Server::startGame(Player &player, Data &data) {
       users[player.getID()] = player.getName();
    }
    else {
-      users[player.getID()] = "Guest" + player.getID();
+      users[player.getID()] = "Guest" + to_string(player.getID());
    }
    users[player.getID()] = player.getName();
    rounds[player.getID()] = 0;

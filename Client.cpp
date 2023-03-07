@@ -76,9 +76,6 @@ void Client::playGame() {
             if (reglogPlayer()) {
                bestOutOfThree();
             }
-            else {
-               printBuffer();
-            }
             break;
          case 5:
             // Log in as an existing player
@@ -127,6 +124,7 @@ bool Client::reglogPlayer() {
 */
 void Client::bestOutOfThree() {
    while (true) {
+      cout << "Waiting for opponent...\n" << endl;
       // message for each round
       printBuffer();
 
@@ -226,7 +224,6 @@ void Client::sendMsg(string msg) {
    memset(&buffer, 0, sizeof(buffer));
    strcpy(buffer, msg.c_str());
    send(sd, buffer, sizeof(buffer), 0);
-   usleep(1000);
 }
 
 
@@ -236,5 +233,4 @@ void Client::sendMsg(string msg) {
 void Client::recvMsg() {
    memset(&buffer, 0, sizeof(buffer));
    recv(sd, buffer, sizeof(buffer), 0);
-   usleep(1000);
 }
