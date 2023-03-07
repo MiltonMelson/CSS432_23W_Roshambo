@@ -16,7 +16,7 @@ int matches[numOfPlayers];
 int draws[numOfPlayers];
 int roster[numOfPlayers];           // roster of currently active players in match
 bool threadLock;                    // used to lock sendMsg function to prevent multiple threads sending at the same time 
-int messageTimer;
+int messageTimer;                   // Used to increase and decrease wait time when threads send messages
 
 /**
  * @brief constructor to initialize all variables 
@@ -501,6 +501,10 @@ string Server::drawChoice(string choice) {
  * @param msg the message that is being sent
 */
 void Server::sendMsg(Player &player, string msg) {
+
+   // will make threads wait different amounts of time depending 
+   // on the number of messages being sent at the same time to 
+   // prevent messages being corrupted
    ++messageTimer;
    this_thread::sleep_for(chrono::microseconds(messageTimer*100));
    

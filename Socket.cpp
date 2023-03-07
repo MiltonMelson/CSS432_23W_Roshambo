@@ -5,12 +5,7 @@
 
 #include "Server.h"
 #include "Socket.h"
-#include <thread>
-#include <condition_variable>
 
-mutex mutexLock;
-condition_variable cv;
-bool serverShutdown;
 
 /**
  * @brief Constructor, sets the port number and maximum number of threads
@@ -18,7 +13,6 @@ bool serverShutdown;
 Socket::Socket() {
    PORT = (char*)"8080";
    maxThreads = 100;
-   serverShutdown = false; 
 }
 
 
@@ -110,19 +104,13 @@ void Socket::createServer() {
       try {
         if (pthread_create(&tid[threadCount], NULL, threadFunc, (void*)&data) != 0) {
             throw runtime_error("Error creating thread");
-            std::unique_lock<std::mutex> lock(mutexLock);
-            while (!serverShutdown) {
-               cv.wait(lock);
-            }
          }
       } catch (const std::exception& e) {
          cerr << "Exception caught: " << e.what() << std::endl;
       }
       threadCount++;
    }
-   unique_lock<std::mutex> lock(mutex);
-   serverShutdown = true;
-   cv.notify_all();
+
    // Wait for child threads created before main thread ends
    for (int i = 0; i < threadCount; i++) {
       pthread_join(tid[i], NULL);

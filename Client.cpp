@@ -62,14 +62,17 @@ void Client::playGame() {
          case 1:
             // View the rules
             printBuffer();
+            sleep(5);
             break;
          case 2:
             // View the stats of an existing player
             displayStats();
+            sleep(5);
             break;
          case 3:
             // View the leaderboard
             printBuffer();
+            sleep(5);
             break;
          case 4:
             // Register as a new player
@@ -135,9 +138,7 @@ void Client::bestOutOfThree() {
       // if message contains Exit then game is over
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
-         cout << result;
-         cout << "Server shutting down, Game Over..." << endl;
-         exit(1);
+         break;
       }
       cout << result;
    }
