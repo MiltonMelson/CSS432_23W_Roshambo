@@ -26,7 +26,7 @@ Client::Client(int socket) {
  * @brief Destructor.
 */
 Client::~Client() {
-   cout << "\n\nGoodbye..." << endl;
+   cout << "\n\nClient shutting down... Goodbye!" << endl;
 }
 
 
