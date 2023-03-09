@@ -28,6 +28,10 @@ Server::Server() {
       scoreboard[i] = 0;
       answers[i] = "0";
       roster[i] = 0;
+      users[i] = "";
+      rounds[i] = 0;
+      matches[i] = 0;
+      draws[i] = 0;
    }
 }
 
@@ -118,9 +122,10 @@ void Server::startGame(Player &player, Data &data) {
       users[player.getID()] = player.getName();
    }
    else {
-      users[player.getID()] = "Guest" + to_string(player.getID());
+      string name = "Guest " + to_string(player.getID());
+      player.setName(name.c_str());
+      users[player.getID()] = name;
    }
-   users[player.getID()] = player.getName();
    rounds[player.getID()] = 0;
    matches[player.getID()] = 0;
    draws[player.getID()] = 0;
@@ -150,6 +155,9 @@ void Server::startGame(Player &player, Data &data) {
 
    // removes the player from the roster and scoreboard
    roster[player.getID()] = 0;
+   rounds[player.getID()] = 0;
+   matches[player.getID()] = 0;
+   draws[player.getID()] = 0;
    cout << users[player.getID()] << " has left the game!" << endl;
    users[player.getID()] = "";
    while (roster[getEnemyIndex(player)] != 0) {
@@ -197,7 +205,7 @@ void Server::menuMessage(Player &player) {
  * @param player A reference to the player passed from startMenu function
 */
 void Server::displayRules(Player &player) { 
-      cout << "[Rule] Displaying rules" << endl;
+   cout << "[Rule] Displaying rules" << endl;
    stringstream msg;
    msg << "\n~~~ Rules ~~~\n\n" <<
    "Each player will pick either rock, paper, or scissors." <<
@@ -267,7 +275,7 @@ int Server::displayStat(Player &player, Data &data) {
 }
 
 int Server::displayBoard(Player &player, Data &data) {
-   string ans = "~~~ Roshambo Leaderboard! ~~~\n";
+   string ans = "\n~~~ Roshambo Leaderboard! ~~~\n";
    int resp = data.getBoard(ans);
    if (resp == 1) {
       cout << "[Lead] Displaying leaderboard" << endl;
@@ -535,7 +543,6 @@ void Server::sendMsg(Player &player, string msg) {
 void Server::recvMsg(Player &player) {
    memset(&buffer, 0, sizeof(buffer));
    recv(player.getSD(), buffer, sizeof(buffer) , 0);
-   usleep(100);
 }
 
 string Server::displayErr(int code) {
