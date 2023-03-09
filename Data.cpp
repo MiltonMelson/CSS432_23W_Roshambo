@@ -73,8 +73,12 @@ int Data::setStats(string name, int match, int round, int draw) {
    while (getline(fin, reader)) {
       readLine(reader, info, sizeof(info)/sizeof(info[0]));
       if(info[0].compare(name) == 0) {
-         msg << name << "|" << (stoi(info[1]) + match) << "|" << (stoi(info[2]) + round) << "|"
-             << (stoi(info[3]) + draw) << "|" << name.length();
+         match += stoi(info[1]);
+         round += stoi(info[2]);
+         draw += stoi(info[3]);
+
+         msg << name << "|" << match << "|" << round << "|"
+             << draw << "|" << name.length();
          string rep = msg.str();
          cout << rep << endl;
          fout << rep << endl;
@@ -87,8 +91,8 @@ int Data::setStats(string name, int match, int round, int draw) {
 
    fin.close();
    fout.close();
-   //remove(database.c_str());
-   //rename("temp.txt", database.c_str());
+   remove(database.c_str());
+   rename("temp.txt", database.c_str());
    //sendMsg(player, "Player data uploaded to leaderboard!\n");
    return 1;
 }
@@ -113,15 +117,23 @@ int Data::getBoard(string &ans) {
    }
    fin.close();
    
+   stringstream msg;
    int i = 1;
    while (!pq.empty()) {
-      ans += pq.top().second;
+      if (i < 10) {
+         msg << " " << i << " - ";
+      }
+      else {
+         msg << i << " - ";
+      }
+      msg << pq.top().second;
       pq.pop();
-      if (i == 25 || pq.empty()) {
+      if (i == 20 || pq.empty()) {
          break;
       }
       i++;
    }
+   ans += msg.str();
    return 1;
 }
 

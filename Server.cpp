@@ -121,15 +121,14 @@ void Server::startGame(Player &player, Data &data) {
       users[player.getID()] = player.getName();
    }
    else {
-      string name = "Guest " + to_string(player.getID());
-      player.setName(name.c_str());
-      users[player.getID()] = name;
+      player.setName(("Guest " + to_string(player.getID())).c_str());
+      users[player.getID()] = player.getName();
    }
    rounds[player.getID()] = 0;
    matches[player.getID()] = 0;
    draws[player.getID()] = 0;
 
-   cout << "Player " << player.getName() << " has joined the game!" << endl;
+   cout << "Player " << users[player.getID()] << " has joined the game!" << endl;
 
    int score = 0;             // the current players score
    int enemyScore = 0;        // the enemies score
@@ -146,10 +145,27 @@ void Server::startGame(Player &player, Data &data) {
       enemyScore = scoreboard[getEnemyIndex(player)]; // gets the enemy score
    }
    if (!player.isGuest()) {
-         cout << users[player.getID()] << ", " << matches[player.getID()] << ", " << rounds[player.getID()] << ", "
-              << draws[player.getID()] << endl;
-         data.setStats(users[player.getID()], matches[player.getID()], rounds[player.getID()],
-                       draws[player.getID()]);
+      // will make threads wait different amounts of time depending 
+      // on the number of messages being sent at the same time to 
+      // prevent messages being corrupted
+      ++messageTimer;
+      this_thread::sleep_for(chrono::microseconds(messageTimer*100));
+
+      // This will lock all threads while one thread is sending a message
+      while (threadLock) {
+         // each thread will wait for different times so they dont all get released at once and hog the threadLock
+         this_thread::sleep_for(chrono::microseconds(messageTimer*100));
+      }
+
+      // sets the threadLock so other threads will wait
+      threadLock = true;
+
+      data.setStats(users[player.getID()], matches[player.getID()], rounds[player.getID()],
+                    draws[player.getID()]);
+
+      // resets the threadLock, notifying other threads
+      threadLock = false;
+      --messageTimer;
    }
 
    // removes the player from the roster and scoreboard
@@ -268,13 +284,13 @@ int Server::displayStat(Player &player, Data &data) {
    int resp = data.getStats(ans, buffer);
    if (resp == 1) {
       cout << "[Stat] Displaying stats for " << buffer << endl;
-      sendMsg(player, ans + "\n\n");
+      sendMsg(player, "\n" + ans + "\n\n");
    }
    return resp;
 }
 
 int Server::displayBoard(Player &player, Data &data) {
-   string ans = "\n~~~ Roshambo Leaderboard! ~~~\n";
+   string ans = "\n~~~ Roshambo Leaderboard! ~~~\n\n";
    int resp = data.getBoard(ans);
    if (resp == 1) {
       cout << "[Lead] Displaying leaderboard" << endl;
@@ -300,7 +316,28 @@ int Server::regPlayer(Player &player, Data &data) {
    }
 
    cout << "[Regi] Searching for " << buffer << "..." << endl;
+
+   // will make threads wait different amounts of time depending 
+   // on the number of messages being sent at the same time to 
+   // prevent messages being corrupted
+   ++messageTimer;
+   this_thread::sleep_for(chrono::microseconds(messageTimer*100));
+
+   // This will lock all threads while one thread is sending a message
+   while (threadLock) {
+      // each thread will wait for different times so they dont all get released at once and hog the threadLock
+      this_thread::sleep_for(chrono::microseconds(messageTimer*100));
+   }
+
+   // sets the threadLock so other threads will wait
+   threadLock = true;
+
    int resp = data.regUser(name);
+
+   // resets the threadLock, notifying other threads
+   threadLock = false;
+   --messageTimer;
+
    if (resp == 1) {
       cout << "[Regi] Registering " << buffer << endl;
       sendMsg(player, "Welcome to Roshambo, " + name + "!\n\n");
@@ -325,7 +362,28 @@ int Server::logPlayer(Player &player, Data &data) {
    }
 
    cout << "[Logg] Searching for " << buffer << "..." << endl;
-   int resp = data.logUser(name);
+   
+// will make threads wait different amounts of time depending 
+   // on the number of messages being sent at the same time to 
+   // prevent messages being corrupted
+   ++messageTimer;
+   this_thread::sleep_for(chrono::microseconds(messageTimer*100));
+
+   // This will lock all threads while one thread is sending a message
+   while (threadLock) {
+      // each thread will wait for different times so they dont all get released at once and hog the threadLock
+      this_thread::sleep_for(chrono::microseconds(messageTimer*100));
+   }
+
+   // sets the threadLock so other threads will wait
+   threadLock = true;
+
+   int resp = data.regUser(name);
+
+   // resets the threadLock, notifying other threads
+   threadLock = false;
+   --messageTimer;
+
    if (resp == 1) {
       cout << "[Logg] Logging " << buffer << endl;
       sendMsg(player, "Welcome back, " + name + "!\n");
@@ -556,7 +614,7 @@ string Server::displayErr(int code) {
          msg << "Name not found...\n\n";
          break;
       case -1:
-         msg << "Error: Name already taken...\n\n";
+         msg << "Name already taken...\n\n";
          break;
       case 0:
          msg << "Failed to open leaderboard...\n\n";
