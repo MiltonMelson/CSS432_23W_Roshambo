@@ -6,42 +6,28 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-
 class Player {
    public:
       Player();
-      Player(int sd);
+      Player(const int sd);
       ~Player();
-      int getSD();
-      void setSD(int sd);
-      int getID();
-      void setID(int ID);
-      const char* getName();
+      int getSD() const;
+      void setSD(const int sd);
+      int getID() const;
+      void setID(const int ID);
+      const char* getName() const;
       void setName(const char* name);
-      char* getChoice();
+      char* getChoice() const;
       void setChoice(char* ans);
-      int getRound();
-      void setRound(int rnd);
-      int getMatch();
-      void setMatch();
-      int getDraw();
-      void setDraw();
       void setGuest();
-      bool isGuest();
-      bool isReady();
-      void notReady();
-      void makeReady();
+      bool isGuest() const;
    
    private:
       int socketDescriptor;   // Socket descriptor so the server can send messages to each player
       int playerNumber;       // Assigned temporarily based on number of players in active match (used for indexing)
-      const char* playerName;       
-      char* choice;           
-      int round;
-      int match;
-      int draw;
-      bool guest;
-      bool ready;
+      const char* playerName; // The player's name
+      char* choice;           // The choice made by the player
+      bool guest;             // Is true if the player is a guest
 };
 
 #endif

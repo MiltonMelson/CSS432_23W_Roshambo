@@ -17,9 +17,9 @@ class Client {
       ~Client();
       
    private:
-      int sd;              // the clients socket descriptor
-      string choice;
-      char buffer[1000];   // the message buffer 
+      int sd;              // The clients socket descriptor
+      string choice;       // The clients choice
+      char buffer[1000];   // The message buffer for the client
 
       string menuChoice();
       void displayStats();

@@ -6,20 +6,25 @@
 #include "Client.h"
 
 
-// default constructor
+/**
+ * @brief Default constructor.
+*/
 Client::Client() {
-   // default constructor
 }
 
 
-// contructor that recieves a socket
+/**
+ * @brief Constructor to set the client's socket descriptor and play the game.
+*/
 Client::Client(int socket) {
-   sd = socket;   // set socket descriptor
-   playGame();    // start the game for the client
+   sd = socket;   // Set socket descriptor
+   playGame();    // Start the game for the client
 }
 
 
-// destructor
+/**
+ * @brief Destructor.
+*/
 Client::~Client() {
    cout << "\n\nGoodbye..." << endl;
 }
@@ -27,7 +32,7 @@ Client::~Client() {
 
 /**
  * @brief Asks the user to select an option based on the menu recieved from the server.
- * @return returns the selected option between 1-7
+ * @return Returns the selected option between 1-7.
 */
 string Client::menuChoice() {
    string ans = "0";
@@ -48,56 +53,8 @@ string Client::menuChoice() {
 
 
 /**
- * @brief Starts the game and directs the user to their desired menu selection
+ * @brief Prompts the user for a name then displays the stats of that player.
 */
-void Client::playGame() {
-   printBuffer();
-
-   string option = "0";
-   while (option.compare("7") != 0) {
-      printBuffer();
-      option = menuChoice();
-      int choice = atoi(option.c_str());
-      switch(choice) {
-         case 1:
-            // View the rules
-            printBuffer();
-            sleep(2);
-            break;
-         case 2:
-            // View the stats of an existing player
-            displayStats();
-            sleep(2);
-            break;
-         case 3:
-            // View the leaderboard
-            printBuffer();
-            sleep(2);
-            break;
-         case 4:
-            // Register as a new player
-            if (reglogPlayer()) {
-               sleep(2);
-               bestOutOfThree();
-            }
-            break;
-         case 5:
-            // Log in as an existing player
-            if(reglogPlayer()) {
-               bestOutOfThree();
-            }
-            break;
-         case 6:
-            // Play as a guest
-            bestOutOfThree();
-            break;
-         default:
-            continue;
-      }
-   }
-}
-
-
 void Client::displayStats() {
    printBuffer();
    string ans;
@@ -107,6 +64,10 @@ void Client::displayStats() {
 }
 
 
+/**
+ * @brief Prompts the user for a name then registers/logs in that player.
+ * @return Returns true if successed.
+*/
 bool Client::reglogPlayer() {
    string ans;
    printBuffer();
@@ -122,23 +83,68 @@ bool Client::reglogPlayer() {
 
 
 /**
- * @brief Creates a best 2 out of 3 environment for the client 
- * to play a match with another player on the server.
+ * @brief Starts the game and directs the user to their desired menu selection.
+*/
+void Client::playGame() {
+   printBuffer();
+
+   string option = "0";
+   while (option.compare("7") != 0) {
+      printBuffer();
+      option = menuChoice();
+      int choice = atoi(option.c_str());
+      switch(choice) {
+         case 1: // Display game rules
+            printBuffer();
+            sleep(2);
+            break;
+         case 2: // Display stats of a selected player
+            displayStats();
+            sleep(2);
+            break;
+         case 3: // Display the leaderboard
+            printBuffer();
+            sleep(2);
+            break;
+         case 4: // Register a player
+            if (reglogPlayer()) {
+               sleep(2);
+               bestOutOfThree();
+            }
+            break;
+         case 5: // Log in as an existing player
+            if(reglogPlayer()) {
+               bestOutOfThree();
+            }
+            break;
+         case 6: // Play as guest
+            bestOutOfThree();
+            break;
+         default:
+            continue;
+      }
+   }
+}
+
+
+/**
+ * @brief Creates a best 2 out of 3 environment for the client to play a match with another player
+ * on the server.
 */
 void Client::bestOutOfThree() {
    cout << "Waiting for opponent...\n" << endl;
    while (true) {
-      // message for each round
+      // Message for each round
       printBuffer();
 
-      // ask client to make a choice and sends the choice to the server
+      // Ask client to make a choice and sends the choice to the server
       sendMsg(makeChoice());  
 
-      // player waits for result from server
+      // Player waits for result from server
       recvMsg(); 
       string result(buffer);
       
-      // if message contains Exit then game is over
+      // If message contains Exit then game is over
       if (result.substr(result.length()-4, result.length()).compare("Exit") == 0) {
          cout << result.substr(0, result.length()-4);
          break;
@@ -164,9 +170,9 @@ void Client::bestOutOfThree() {
 
 
 /**
- * @brief Asks the user to make a choice between rock, paper, scissors
- * will keep asking until a correct choice has been made.
- * @return returns a copy of the choice to bestOutofThree 
+ * @brief Asks the user to make a choice between rock, paper, scissors will keep asking until a
+ * correct choice has been made.
+ * @return Returns a copy of the choice to bestOutofThree.
 */
 string Client::makeChoice() {
    string choice = "";
@@ -182,10 +188,10 @@ string Client::makeChoice() {
 
 
 /**
- * @brief converts the input rock, paper, scissors to lower case and
- * compared the string to expected options to verify correct input.
- * @param input the provided string from the user
- * @return returns corresponding enum value or -1 if incorrect input
+ * @brief Converts the input rock, paper, scissors to lower case and compared the string to expected
+ * options to verify correct input.
+ * @param input The provided string from the user.
+ * @return Returns corresponding enum value or -1 if incorrect input.
 */
 int Client::convertAnswer(string &input) {
    convertToLower(input);
@@ -203,8 +209,8 @@ int Client::convertAnswer(string &input) {
 
 
 /**
- * @brief converts a string of characters between A-Z to lowercase
- * @param input the provided string to convert to lowercase
+ * @brief Converts a string of characters between A-Z to lowercase.
+ * @param input The provided string to convert to lowercase.
 */
 void Client::convertToLower(string &input) {
    for (int i = 0; i < input.length(); i++) {
@@ -215,14 +221,17 @@ void Client::convertToLower(string &input) {
 }
 
 
+/**
+ * @brief Prints outs the buffer.
+*/
 void Client::printBuffer() {
    recvMsg();
    cout << buffer;
 }
 
 /**
- * @brief Sends a message through the clients socket descriptor
- * @param msg the message to be sent
+ * @brief Sends a message through the clients socket descriptor.
+ * @param msg The message to be sent.
 */
 void Client::sendMsg(string msg) {
    memset(&buffer, 0, sizeof(buffer));
@@ -232,7 +241,7 @@ void Client::sendMsg(string msg) {
 
 
 /**
- * @brief Recieves a message from the socket descriptor into the buffer
+ * @brief Recieves a message from the socket descriptor into the buffer.
 */
 void Client::recvMsg() {
    memset(buffer, 0, sizeof(buffer));

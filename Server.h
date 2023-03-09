@@ -10,16 +10,15 @@
 #include "Data.h"
 #include "Socket.h"
 
-const int numOfPlayers = 101;          // current max players can go higher unlikely to need to         
-extern int scoreboard[numOfPlayers];   // temp scoreboard of each match           
-extern string answers[numOfPlayers];   // storage for each players provided answers
-extern string users[numOfPlayers];
-extern int rounds[numOfPlayers];
-extern int matches[numOfPlayers];
-extern int draws[numOfPlayers];
-extern int roster[numOfPlayers];       // roster of currently active players in match
-extern bool threadLock;                // used to lock sendMsg function to prevent multiple threads sending at the same time
-extern int messageTimer;               // Used to increase and decrease wait time when threads send messages
+const int numOfPlayers = 101;          // Current max players can go higher unlikely to need to         
+extern bool roster[numOfPlayers];      // Roster of currently active players in match
+extern string users[numOfPlayers];     // Storage for each players usernames
+extern string answers[numOfPlayers];   // Storage for each players provided answers
+extern int scoreboard[numOfPlayers];   // Temp. scoreboard of each match
+extern int draws[numOfPlayers];        // Storage for each player's draws
+extern bool win[numOfPlayers];         // Storage if a player won a match
+extern bool threadLock;                // Used during thread critical sections
+extern int messageTimer;               // Used to alter wait time during critical sections
 
 class Server {
    public:
@@ -28,7 +27,7 @@ class Server {
       void startMenu(void* info);
 
    private:
-      char buffer[1000];      // message buffer for the server
+      char buffer[1000];               // Message buffer for the server
 
       void startGame(Player &player, Data &data);
       void welcomeMessage(Player &player);
@@ -41,9 +40,9 @@ class Server {
       void assignPlayerID(Player &player);
       void waitForAnswers(Player &player);
       void determineWinner(Player &player);
-      int getEnemyIndex(Player &player);
-      string drawChoice(string choice);
-      string displayErr(int code);
+      int getEnemyIndex(Player &player) const;
+      string drawChoice(const string choice) const;
+      string displayErr(const int code) const;
       void sendMsg(Player &player, string msg);
       void recvMsg(Player &player);
 };

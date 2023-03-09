@@ -8,7 +8,7 @@
 
 
 /**
- * @brief Constructor, sets the port number and maximum number of threads
+ * @brief Constructor, sets the port number and maximum number of threads.
 */
 Socket::Socket() {
    PORT = (char*)"8080";
@@ -17,7 +17,7 @@ Socket::Socket() {
 
 
 /**
- * @brief Destructor, closes the client and servers socket descriptors
+ * @brief Destructor, closes the client and servers socket descriptors.
 */
 Socket::~Socket() {
    // close socket descriptor
@@ -29,8 +29,8 @@ Socket::~Socket() {
 
 /**
  * @brief Thread function to start the game for each thread created by the server.
- * @param data The data for each thread
- * @return the data in each thread
+ * @param data The data for each thread.
+ * @return Returns the data in each thread.
 */
 void* threadFunc(void *data) {
    try {
@@ -80,7 +80,7 @@ void Socket::createServer() {
       return;
    }
 
-   cout << "Waiting for players..." << endl;
+   cout << "Server starting up..." << endl;
 
    // listen for N request
    if (listen(serverSD, maxThreads) < 0) {

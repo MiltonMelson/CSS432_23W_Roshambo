@@ -7,7 +7,6 @@
 #include "Server.h"
 
 
-
 /**
  * @brief This is the driver function for the game.
  * The server and client will be determined based on arguments provided

@@ -5,33 +5,33 @@
 
 #include "Player.h"
 
+
 Player::Player() {}
 
-Player::Player(int sd) {
+Player::Player(const int sd) {
    socketDescriptor = sd;
    guest = false;
-   ready = false;
 }
 
 Player::~Player() {}
 
-int Player::getSD() {
+int Player::getSD() const {
    return socketDescriptor;
 }
 
-void Player::setSD(int sd) {
+void Player::setSD(const int sd) {
    socketDescriptor = sd;
 }
 
-int Player::getID() {
+int Player::getID() const {
    return playerNumber;
 }
 
-void Player::setID(int ID) {
+void Player::setID(const int ID) {
    playerNumber = ID;
 }
 
-const char* Player::getName() {
+const char* Player::getName() const {
    return playerName;
 }
 
@@ -39,7 +39,7 @@ void Player::setName(const char* name) {
    playerName = name;
 }
 
-char* Player::getChoice() {
+char* Player::getChoice() const {
    return choice;
 }
 
@@ -47,46 +47,10 @@ void Player::setChoice(char* ans) {
    choice = ans;
 }
 
-int Player::getRound() {
-   return round;
-}
-
-void Player::setRound(int rnd) {
-   round += rnd;
-}
-
-int Player::getMatch() {
-   return match;
-}
-
-void Player::setMatch() {
-   match++;
-}
-
-int Player::getDraw() {
-   return draw;
-}
-
-void Player::setDraw() {
-   draw++;
-}
-
 void Player::setGuest() {
    guest = true;
 }
 
-bool Player::isGuest() {
+bool Player::isGuest() const {
    return guest;
-}
-
-bool Player::isReady() {
-   return ready;
-}
-
-void Player::makeReady() {
-   ready = true;
-}
-
-void Player::notReady() {
-   ready = false;
 }

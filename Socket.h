@@ -27,10 +27,10 @@ class Socket {
       int getClientSD();
 
    private:
-      const char* PORT;                // port number to listen on
-      struct addrinfo s_hints, *s_res, c_hints, *c_res;     // containers to store address info
-      int serverSD, clientSD;          // Socket Descriptor
-      int maxThreads;                  // Maximum threads
+      const char* PORT;                                  // port number to listen on
+      struct addrinfo s_hints, *s_res, c_hints, *c_res;  // Containers to store address info
+      int serverSD, clientSD;                            // Socket Descriptor
+      int maxThreads;                                    // Maximum threads
 };
 
 #endif
