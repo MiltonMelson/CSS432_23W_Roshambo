@@ -67,9 +67,11 @@ void Server::startMenu(void* info) {
             break;
          case 2:
             code = displayStat(player, data);
+            this_thread::sleep_for(chrono::microseconds(1000000));
             break;
          case 3:
             code = displayBoard(player, data);
+            this_thread::sleep_for(chrono::microseconds(1000000));
             break;
          case 4:
             code = regPlayer(player, data);
@@ -101,9 +103,6 @@ void Server::startMenu(void* info) {
       }
       if (code != 1) {
          sendMsg(player, displayErr(code));
-         this_thread::sleep_for(chrono::microseconds(100000));
-      }
-      else {
          this_thread::sleep_for(chrono::microseconds(100000));
       }
    }  
@@ -261,8 +260,8 @@ void Server::assignPlayerID(Player &player) {
 
 int Server::displayStat(Player &player, Data &data) {
    string ans;
-
-   sendMsg(player, "Type the name for the player's stats you want to view: ");
+   string msg = "Type the name for the player's stats you want to view: ";
+   sendMsg(player, msg);
    recvMsg(player);
 
    cout << "[Stat] Searching for " << buffer << "..." << endl;
@@ -281,6 +280,7 @@ int Server::displayBoard(Player &player, Data &data) {
       cout << "[Lead] Displaying leaderboard" << endl;
       sendMsg(player, ans + "\n\n");
    }
+   this_thread::sleep_for(chrono::microseconds(1000000));
    return resp;
 }
 

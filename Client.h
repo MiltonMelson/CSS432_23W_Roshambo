@@ -19,7 +19,7 @@ class Client {
    private:
       int sd;              // the clients socket descriptor
       string choice;
-      char buffer[8000];   // the message buffer 
+      char buffer[1000];   // the message buffer 
 
       string menuChoice();
       void displayStats();

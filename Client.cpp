@@ -62,21 +62,22 @@ void Client::playGame() {
          case 1:
             // View the rules
             printBuffer();
-            sleep(5);
+            sleep(2);
             break;
          case 2:
             // View the stats of an existing player
             displayStats();
-            sleep(5);
+            sleep(2);
             break;
          case 3:
             // View the leaderboard
             printBuffer();
-            sleep(5);
+            sleep(2);
             break;
          case 4:
             // Register as a new player
             if (reglogPlayer()) {
+               sleep(2);
                bestOutOfThree();
             }
             break;
@@ -96,13 +97,15 @@ void Client::playGame() {
    }
 }
 
+
 void Client::displayStats() {
-   string ans;
    printBuffer();
+   string ans;
    cin >> ans;
    sendMsg(ans);
    printBuffer();
 }
+
 
 bool Client::reglogPlayer() {
    string ans;
@@ -211,6 +214,7 @@ void Client::convertToLower(string &input) {
    }
 }
 
+
 void Client::printBuffer() {
    recvMsg();
    cout << buffer;
@@ -231,6 +235,6 @@ void Client::sendMsg(string msg) {
  * @brief Recieves a message from the socket descriptor into the buffer
 */
 void Client::recvMsg() {
-   memset(&buffer, 0, sizeof(buffer));
-   recv(sd, buffer, sizeof(buffer), 0);
+   memset(buffer, 0, sizeof(buffer));
+   recv(sd, buffer, sizeof(buffer), MSG_WAITALL);
 }

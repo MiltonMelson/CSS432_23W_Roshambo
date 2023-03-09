@@ -28,7 +28,7 @@ class Server {
       void startMenu(void* info);
 
    private:
-      char buffer[8000];      // message buffer for the server
+      char buffer[1000];      // message buffer for the server
 
       void startGame(Player &player, Data &data);
       void welcomeMessage(Player &player);
