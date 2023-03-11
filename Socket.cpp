@@ -8,7 +8,7 @@
 
 
 /**
- * @brief Constructor, sets the port number and maximum number of threads.
+ * @brief Default Constructor, sets the port number and maximum number of threads.
 */
 Socket::Socket() {
    PORT = (char*)"8080";

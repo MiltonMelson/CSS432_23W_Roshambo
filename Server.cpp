@@ -19,7 +19,7 @@ int messageTimer;             // Used to alter wait time during critical section
 
 
 /**
- * @brief Constructor to initialize all variables.
+ * @brief Default Constructor, initializes all variables.
 */
 Server::Server() {
    messageTimer = 0;

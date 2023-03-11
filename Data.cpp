@@ -16,7 +16,7 @@ Data::Data() {}
 
 
 /**
- * @brief Constructor to set the client's socket descriptor and play the game.
+ * @brief Constructor, sets the server's database filename.
 */
 Data::Data(string db) {
    database = db;

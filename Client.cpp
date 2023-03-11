@@ -14,7 +14,7 @@ Client::Client() {
 
 
 /**
- * @brief Constructor to set the client's socket descriptor and play the game.
+ * @brief Constructor, set the client's socket descriptor and play the game.
 */
 Client::Client(int socket) {
    sd = socket;   // Set socket descriptor
